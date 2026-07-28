@@ -508,35 +508,44 @@ let state = normalizeLegacy(loadLocal() || {view:"week", anchor:todayISO(), cale
 let active = null;
 let pickCat = "all";
 let ghToken = null;
-let ghSha = null;
+let saving = false;     // 防止并发写
 
 function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 ghToken = (loadLocal()||{})._ghToken||null;
 
-// 先拿到 GitHub 文件 SHA（写文件必须）
-fetch(GH_API).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.sha)ghSha=d.sha;}).catch(()=>{});
-
 function save(){
+  // 先存 localStorage（立即生效）
+  const snapshot = JSON.parse(JSON.stringify(state));
   localStorage.setItem(KEY, JSON.stringify(state));
-  if(ghToken&&ghSha){
-    const payload={
-      calendar:state.calendar, favorites:state.favorites,
-      library:state.library, updatedAt:new Date().toISOString()
+
+  if(!ghToken||saving)return;
+  saving = true;
+
+  // 串联：拉 SHA → 写文件 → 更新 SHA
+  fetch(GH_API).then(r=>r.ok?r.json():null).then(d=>{
+    if(!d||!d.sha)throw new Error("no sha");
+    const payload = {
+      calendar:snapshot.calendar, favorites:snapshot.favorites,
+      library:snapshot.library, updatedAt:new Date().toISOString()
     };
-    fetch(GH_API,{
+    return fetch(GH_API,{
       method:"PUT",
       headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
       body:JSON.stringify({
         message:`sync: ${new Date().toLocaleString("zh-CN")}`,
-        branch:GH_BRANCH, sha:ghSha,
+        branch:GH_BRANCH, sha:d.sha,
         content:btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))))
       })
-    }).then(r=>r.json()).then(d=>{
-      if(d.content&&d.content.sha)ghSha=d.content.sha;
-      else console.warn("GitHub save:",d.message);
-    }).catch(e=>console.warn("GitHub save err:",e));
-  }
+    });
+  }).then(r=>r.ok?r.json():null).then(d=>{
+    if(d&&d.content&&d.content.sha)console.log("☁️ synced");
+    saving = false;
+  }).catch(e=>{
+    console.warn("GitHub save:",e.message||e);
+    saving = false;
+  });
 }
+
 
 /* ---- 骨架屏 ---- */
 const skEl=document.getElementById("skeleton");
@@ -552,7 +561,8 @@ fetch(DATA_URL+"?t="+Date.now())
     state.favorites=d.favorites||[];
     if(d.library)state.library=d.library;
     state=normalizeLegacy(state);
-    save();render();
+    localStorage.setItem(KEY, JSON.stringify(state));
+    render();
     toast("☁️ 已加载云端数据");
   }
   skEl.classList.remove("show");
@@ -938,9 +948,7 @@ document.getElementById("ghTokenSave").onclick=()=>{
   if(!v||!v.startsWith("ghp_")){toast("请输入有效的 GitHub PAT（ghp_ 开头）");return;}
   ghToken=v;
   const s=loadLocal()||{};s._ghToken=v;localStorage.setItem(KEY,JSON.stringify(s));
-  // 获取新 SHA
-  fetch(GH_API).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.sha){ghSha=d.sha;console.log("SHA loaded:",ghSha.substring(0,7));}}).catch(()=>{});
-  toast("✅ 已配置，云端同步已启用");
+  toast("✅ 已配置，修改将自动同步到云端");
   document.getElementById("ghTokenInput").value="";
   document.getElementById("ghTokenStatus").textContent="✅ 已配置写入权限";
   document.getElementById("ghTokenStatus").style.color="#27ae60";

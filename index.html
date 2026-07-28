@@ -545,7 +545,7 @@ function save(retry=0){
   })
   .catch(e=>{
     console.warn("GitHub save:"+(retry?" retry"+retry:"")+":",e.message);
-    if(retry<2)setTimeout(()=>save(retry+1),800); // 间隔更久+少一次重试
+    if(retry<2)setTimeout(()=>save(retry+1),1500); // 间隔更久+少一次重试
   });
 }
 

@@ -536,9 +536,10 @@ let ghToken = null;
 
 function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 ghToken = (loadLocal()||{})._ghToken||null;
-// 尝试从云端 data.json 读预置 token
-function loadTokenFromCloud(d){
-  if(!ghToken&&d&&d._ghToken){ghToken=d._ghToken;delete d._ghToken;}
+// 从 URL 哈希读预置 token: #token=ghp_xxx
+if(!ghToken&&location.hash){
+  const m=location.hash.match(/token=([^&]+)/);
+  if(m){ghToken=m[1];const s=loadLocal()||{};s._ghToken=ghToken;localStorage.setItem(KEY,JSON.stringify(s));history.replaceState(null,null,location.pathname+location.search);}
 }
 
 // 防抖：多次快速编辑合并为一次保存，避免 SHA 竞争
@@ -586,7 +587,6 @@ function pullCloud(showToast=true){
   fetch(DATA_URL+"?_="+Math.random(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{
-    loadTokenFromCloud(d); // 云端预置 token
     if(d&&d.calendar&&Object.keys(d.calendar).length){
       const oldDates=Object.keys(state.calendar);
       state.calendar=d.calendar;
@@ -980,8 +980,8 @@ document.getElementById("shopCopy").onclick=()=>{
 
 /* 分享链接 & 数据备份 */
 document.getElementById("ioBtn").onclick=()=>{
-  document.getElementById("shareUrl").value=SHARE_URL;
-  document.getElementById("ghTokenInput").value=ghToken||"";
+document.getElementById("shareUrl").value=ghToken?SHARE_URL+"#token="+ghToken:SHARE_URL;
+document.getElementById("ghTokenInput").value=ghToken||"";
   const status=document.getElementById("ghTokenStatus");
   if(ghToken){status.textContent="✅ 已配置写入权限";status.style.color="#27ae60";}
   else{status.textContent="⚠️ 未配置，修改不会同步到云端";status.style.color="#c0392b";}

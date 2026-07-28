@@ -52,7 +52,11 @@
   .meal.lunch{border-left:4px solid #5bbd77}
   .meal.dinner{border-left:4px solid #6f8de0}
   .meal .mimg{width:100%;height:62px;object-fit:cover;border-radius:8px;margin-bottom:6px;background:#faf4ee}
-  .meal .slot{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+  .meal .slot{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+  .slot-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:.5px}
+  .slot-badge.break{background:#fff3e6;color:#d4893a}
+  .slot-badge.lunch{background:#e8f5e9;color:#3a8546}
+  .slot-badge.dinner{background:#e8eaf6;color:#4a5eb5}
   .meal .nm{font-weight:600;margin-top:2px}
   .meal.done .nm{text-decoration:line-through;color:var(--muted)}
   .meal .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
@@ -166,10 +170,11 @@
     .day{padding:8px;gap:6px;border-radius:12px}
     .day .dhead{padding-bottom:4px;font-size:13px}
     .day .dhead .dt{font-size:11px}
-    .meal{padding:7px 8px;border-radius:10px}
-    .meal .mimg{height:42px;margin-bottom:4px}
-    .meal .nm{font-size:12px}
+    .meal{padding:8px 10px;border-radius:10px}
+    .meal .mimg{height:72px;margin-bottom:6px;object-fit:contain;border-radius:8px;background:#faf4ee}
+    .meal .nm{font-size:13px}
     .meal .slot{font-size:10px}
+    .slot-badge{font-size:10px;padding:2px 7px}
     .meal .tags{margin-top:4px}
     .tag{font-size:9px;padding:1px 5px}
     .meal .ck{top:6px;right:6px;width:16px;height:16px;font-size:10px}
@@ -652,7 +657,7 @@ function dayCard(k,dupeNames){
         <div class="ck">${it.done?"✓":""}</div>
         <button class="del" data-del="${k}|${s}|${idx}" title="删除">🗑</button>
         ${it.img?`<img class="mimg" src="${it.img}" onerror="this.style.display='none'">`:""}
-        <div class="slot"><span>${CAT_NAME[s]}</span><span>⏱${it.prep}′</span></div>
+        <div class="slot"><span class="slot-badge ${s}">${CAT_NAME[s]}</span><span>⏱${it.prep}′</span></div>
         <div class="nm">${it.name}</div>
         <div class="tags">${tags}</div>
       </div>`;
@@ -951,7 +956,7 @@ document.getElementById("shopCopy").onclick=()=>{
 /* 分享链接 & 数据备份 */
 document.getElementById("ioBtn").onclick=()=>{
   document.getElementById("shareUrl").value=SHARE_URL;
-  // 显示 token 状态
+  document.getElementById("ghTokenInput").value=ghToken||"";
   const status=document.getElementById("ghTokenStatus");
   if(ghToken){status.textContent="✅ 已配置写入权限";status.style.color="#27ae60";}
   else{status.textContent="⚠️ 未配置，修改不会同步到云端";status.style.color="#c0392b";}

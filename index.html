@@ -513,39 +513,44 @@ let ghToken = null;
 function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 ghToken = (loadLocal()||{})._ghToken||null;
 
-function save(retry=0){
-  const snapshot = JSON.parse(JSON.stringify(state));
+// 防抖：多次快速编辑合并为一次保存，避免 SHA 竞争
+let saveTimer=null;
+let saveRunning=false;
+
+function save(){
   localStorage.setItem(KEY, JSON.stringify(state));
   if(!ghToken)return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(doSave,600);
+}
 
-  // GET: 加随机参数强制绕 CDN 缓存 → 拿到最新 SHA
+function doSave(retry=0){
+  if(saveRunning)return;
+  saveRunning=true;
+  const snapshot=JSON.parse(JSON.stringify(state));
+
   fetch(`${GH_API_GET}?ref=${GH_BRANCH}&_=${Math.random()}`)
   .then(r=>{if(!r.ok)throw new Error("GET "+r.status);return r.json();})
   .then(meta=>{
     if(!meta.sha)throw new Error("no sha");
-    const payload = {
-      calendar:snapshot.calendar, favorites:snapshot.favorites,
-      library:snapshot.library, updatedAt:new Date().toISOString()
-    };
+    const payload={calendar:snapshot.calendar,favorites:snapshot.favorites,library:snapshot.library,updatedAt:new Date().toISOString()};
     const content=btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))));
-    // PUT: 不带 query，SHA 从 GET 拿到的 → 写入
     return fetch(GH_API_PUT,{
       method:"PUT",
       headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
-      body:JSON.stringify({
-        message:`sync ${new Date().toLocaleTimeString("zh-CN")}`,
-        branch:GH_BRANCH, sha:meta.sha, content
-      })
+      body:JSON.stringify({message:`sync ${new Date().toLocaleTimeString("zh-CN")}`,branch:GH_BRANCH,sha:meta.sha,content})
     });
   })
   .then(r=>{if(!r.ok)return r.json().then(j=>{throw new Error(j.message)});return r.json();})
   .then(d=>{
     if(d&&d.content){console.log("☁️ synced "+d.content.sha.substring(0,7));toast("☁️ 已同步");}
     else throw new Error("no sha in response");
+    saveRunning=false;
   })
   .catch(e=>{
     console.warn("GitHub save:"+(retry?" retry"+retry:"")+":",e.message);
-    if(retry<2)setTimeout(()=>save(retry+1),1500); // 间隔更久+少一次重试
+    saveRunning=false;
+    if(retry<2)setTimeout(()=>doSave(retry+1),1500);
   });
 }
 

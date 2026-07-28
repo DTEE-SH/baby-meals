@@ -170,11 +170,18 @@
     .day{padding:8px;gap:6px;border-radius:12px}
     .day .dhead{padding-bottom:4px;font-size:13px}
     .day .dhead .dt{font-size:11px}
-    .meal{padding:8px 10px;border-radius:10px}
-    .meal .mimg{height:72px;margin-bottom:6px;object-fit:contain;border-radius:8px;background:#faf4ee}
-    .meal .nm{font-size:13px}
-    .meal .slot{font-size:10px}
+    .meal{padding:8px 10px;border-radius:10px;display:flex;gap:10px;align-items:stretch;min-height:88px}
+    .meal .mimg{width:84px;height:84px;margin:0;object-fit:cover;border-radius:10px;flex:none;align-self:flex-start}
+    .meal .ck{width:16px;height:16px;font-size:10px}
+    .meal .del{width:18px;height:18px;font-size:9px}
+    .meal .body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+    .meal .slot{font-size:10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
     .slot-badge{font-size:10px;padding:2px 7px}
+    .meal .nm{font-size:14px;font-weight:600;line-height:1.3;white-space:normal;margin:0}
+    .meal .tags{margin-top:0;gap:3px}
+    .tag{font-size:9px;padding:1px 5px}
+    .meal.empty{flex-direction:column;align-items:center;justify-content:center;min-height:auto;font-size:11px}
+    .meal.add-more{flex-direction:column;align-items:center;justify-content:center;min-height:auto;padding:4px 6px;font-size:10px}
     .meal .tags{margin-top:4px}
     .tag{font-size:9px;padding:1px 5px}
     .meal .ck{top:6px;right:6px;width:16px;height:16px;font-size:10px}
@@ -657,9 +664,11 @@ function dayCard(k,dupeNames){
         <div class="ck">${it.done?"✓":""}</div>
         <button class="del" data-del="${k}|${s}|${idx}" title="删除">🗑</button>
         ${it.img?`<img class="mimg" src="${it.img}" onerror="this.style.display='none'">`:""}
-        <div class="slot"><span class="slot-badge ${s}">${CAT_NAME[s]}</span><span>⏱${it.prep}′</span></div>
-        <div class="nm">${it.name}</div>
-        <div class="tags">${tags}</div>
+        <div class="body">
+          <div class="slot"><span class="slot-badge ${s}">${CAT_NAME[s]}</span><span>⏱${it.prep}′</span></div>
+          <div class="nm">${it.name}</div>
+          <div class="tags">${tags}</div>
+        </div>
       </div>`;
     }).join("");
     const addBtn=`<div class="meal empty add-more" data-add="${k}|${s}">＋ 加菜</div>`;

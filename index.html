@@ -508,42 +508,58 @@ let state = normalizeLegacy(loadLocal() || {view:"week", anchor:todayISO(), cale
 let active = null;
 let pickCat = "all";
 let ghToken = null;
-let saving = false;     // 防止并发写
 
 function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 ghToken = (loadLocal()||{})._ghToken||null;
 
-function save(){
-  // 先存 localStorage（立即生效）
+function save(retry=0){
   const snapshot = JSON.parse(JSON.stringify(state));
   localStorage.setItem(KEY, JSON.stringify(state));
+  if(!ghToken)return;
 
-  if(!ghToken||saving)return;
-  saving = true;
-
-  // 串联：拉 SHA → 写文件 → 更新 SHA
-  fetch(GH_API).then(r=>r.ok?r.json():null).then(d=>{
-    if(!d||!d.sha)throw new Error("no sha");
-    const payload = {
-      calendar:snapshot.calendar, favorites:snapshot.favorites,
-      library:snapshot.library, updatedAt:new Date().toISOString()
-    };
-    return fetch(GH_API,{
-      method:"PUT",
-      headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
-      body:JSON.stringify({
-        message:`sync: ${new Date().toLocaleString("zh-CN")}`,
-        branch:GH_BRANCH, sha:d.sha,
-        content:btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))))
-      })
+  function attempt(){
+    return fetch(GH_API,{cache:"no-store"}).then(r=>r.json()).then(meta=>{
+      if(!meta.sha)throw new Error("no sha");
+      const payload = {
+        calendar:snapshot.calendar, favorites:snapshot.favorites,
+        library:snapshot.library, updatedAt:new Date().toISOString()
+      };
+      return fetch(GH_API,{
+        method:"PUT",
+        cache:"no-store",
+        headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
+        body:JSON.stringify({
+          message:`sync ${new Date().toLocaleTimeString("zh-CN")}`,
+          branch:GH_BRANCH, sha:meta.sha,
+          content:btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))))
+        })
+      }).then(r=>r.json());
     });
-  }).then(r=>r.ok?r.json():null).then(d=>{
-    if(d&&d.content&&d.content.sha)console.log("☁️ synced");
-    saving = false;
+  }
+
+  attempt().then(d=>{
+    if(d&&d.content&&d.content.sha){console.log("☁️ synced");toast("☁️ 已同步")}
+    else throw new Error(d.message||"no sha in response");
   }).catch(e=>{
-    console.warn("GitHub save:",e.message||e);
-    saving = false;
+    console.warn("GitHub save (try "+retry+"):",e.message);
+    if(retry<3)setTimeout(()=>save(retry+1),500); // 自动重试
   });
+}
+
+function pullCloud(showToast=true){
+  fetch(DATA_URL+"?_="+Date.now(),{cache:"no-store"})
+  .then(r=>r.ok?r.json():null)
+  .then(d=>{
+    if(d&&d.calendar&&Object.keys(d.calendar).length){
+      state.calendar=d.calendar;
+      state.favorites=d.favorites||[];
+      if(d.library)state.library=d.library;
+      state=normalizeLegacy(state);
+      localStorage.setItem(KEY, JSON.stringify(state));
+      render();
+      if(showToast)toast("☁️ 已从云端拉取");
+    }
+  }).catch(e=>console.warn("GitHub read:",e));
 }
 
 
@@ -552,24 +568,9 @@ const skEl=document.getElementById("skeleton");
 skEl.classList.add("show");
 setTimeout(()=>skEl.classList.remove("show"),3000);
 
-/* ---- 从 GitHub 拉数据 ---- */
-fetch(DATA_URL+"?t="+Date.now())
-.then(r=>r.ok?r.json():null)
-.then(d=>{
-  if(d&&d.calendar&&Object.keys(d.calendar).length){
-    state.calendar=d.calendar;
-    state.favorites=d.favorites||[];
-    if(d.library)state.library=d.library;
-    state=normalizeLegacy(state);
-    localStorage.setItem(KEY, JSON.stringify(state));
-    render();
-    toast("☁️ 已加载云端数据");
-  }
-  skEl.classList.remove("show");
-}).catch(e=>{
-  console.warn("GitHub read:",e);
-  skEl.classList.remove("show");
-});
+/* ---- 首次拉数据 ---- */
+pullCloud(false);
+setTimeout(()=>skEl.classList.remove("show"),3000);
 
 function normalizeLegacy(s){
   if(!s.library||s.library.length<50)s.library=LIBRARY.map(x=>({...x,ing:x.ing.map(y=>({...y})),steps:[...x.steps],tags:[...x.tags],al:[...x.al]}));

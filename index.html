@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>宝宝餐饮日历 · 1岁4个月</title>
+<style>
+  :root{
+    --bg:#fff8f3; --panel:#ffffff; --ink:#3a322c; --muted:#9a8f86;
+    --line:#f0e6dd; --accent:#ff8a5b; --accent-soft:#ffe9df;
+    --break:#ffe3b3; --lunch:#bfe3c6; --dinner:#c9d8ff;
+    --ok:#3fb27f; --warn:#e0683c; --chip:#f6efe8;
+    --shadow:0 6px 22px rgba(120,90,60,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  header{padding:18px 22px 12px;background:linear-gradient(120deg,#fff3ea,#ffeede);
+    border-bottom:1px solid var(--line)}
+  .title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .title h1{margin:0;font-size:22px;letter-spacing:.5px}
+  .title .sub{color:var(--muted);font-size:13px}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+  .seg button{border:0;background:transparent;padding:7px 16px;border-radius:999px;cursor:pointer;color:var(--muted);font-size:13px}
+  .seg button.on{background:var(--accent);color:#fff}
+  .nav{display:inline-flex;align-items:center;gap:6px}
+  .nav button{border:1px solid var(--line);background:#fff;border-radius:10px;width:34px;height:34px;cursor:pointer;font-size:16px;color:var(--ink)}
+  .nav .range{min-width:190px;text-align:center;font-weight:600;font-size:13px}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;color:var(--ink);box-shadow:var(--shadow);text-decoration:none;display:inline-block}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.ghost{background:transparent;box-shadow:none}
+  .btn.sm{padding:4px 10px;font-size:11px;border-radius:8px}
+  .spacer{flex:1}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:12px;color:var(--muted)}
+  .stat b{color:var(--ink);font-size:13px}
+  main{padding:18px 22px 60px;max-width:1280px;margin:0 auto}
+  .grid{display:grid;gap:14px}
+  .grid.week{grid-template-columns:repeat(7,1fr)}
+  .grid.three{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:980px){.grid.week{grid-template-columns:repeat(3,1fr)}.grid.three{grid-template-columns:1fr}}
+  .day{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+  .day.today{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .day .dhead{display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+  .day .dhead .wd{font-weight:700}
+  .day .dhead .dt{color:var(--muted);font-size:12px}
+  .meal{position:relative;border-radius:12px;padding:9px 10px 9px 12px;border:1px solid var(--line);background:#fff;cursor:pointer;transition:.15s}
+  .meal:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+  .meal.empty{background:repeating-linear-gradient(45deg,#fff,#fff 8px,#faf4ee 8px,#faf4ee 16px);border-style:dashed;color:var(--muted);display:flex;align-items:center;gap:6px;font-size:12px}
+  .meal.break{border-left:4px solid #f0a64e}
+  .meal.lunch{border-left:4px solid #5bbd77}
+  .meal.dinner{border-left:4px solid #6f8de0}
+  .meal .mimg{width:100%;height:62px;object-fit:cover;border-radius:8px;margin-bottom:6px;background:#faf4ee}
+  .meal .slot{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+  .meal .nm{font-weight:600;margin-top:2px}
+  .meal.done .nm{text-decoration:line-through;color:var(--muted)}
+  .meal .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+  .tag{font-size:10px;padding:2px 6px;border-radius:6px;background:var(--chip);color:#7a6f64}
+  .tag.al{background:#ffe1df;color:#c0392b}
+  .meal .ck{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;z-index:2}
+  .meal.done .ck{background:var(--ok);border-color:var(--ok)}
+  .meal .del{position:absolute;top:8px;left:8px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:10px;color:#c0392b;display:flex;align-items:center;justify-content:center;z-index:2}
+  .meal .del:hover{background:#ffe1df}
+  .clear-day{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;border-radius:4px}
+  .clear-day:hover{color:#c0392b;background:#ffe1df}
+  .meal.add-more{padding:5px 8px;font-size:11px;justify-content:center;background:#fff;border:1px dashed var(--line);margin-top:3px}
+  .meal.add-more:hover{background:var(--accent-soft)}
+  /* 餐品管理 */
+  .lib-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .lib-tbl th{text-align:left;padding:8px 6px;border-bottom:2px solid var(--line);font-size:11px;color:var(--muted);position:sticky;top:0;background:var(--panel)}
+  .lib-tbl td{padding:7px 6px;border-bottom:1px solid var(--line)}
+  .lib-tbl .ldel{cursor:pointer;color:var(--muted);font-size:14px;padding:0 4px}
+  .lib-tbl .ldel:hover{color:#c0392b}
+  .lib-wrapper{max-height:52vh;overflow-y:auto}
+  .lib-add-row{display:flex;gap:8px;align-items:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .lib-add-row input,.lib-add-row select{border:1px solid var(--line);border-radius:8px;padding:7px 8px;font-size:12px;font-family:inherit}
+  .lib-add-row .add-name{flex:1;min-width:120px}
+  .lib-add-row .add-cat{width:80px}
+  .lib-add-row .add-prep{width:60px}
+
+  /* 周视图紧凑模式 */
+  .grid.week .day{padding:6px;gap:5px;border-radius:12px}
+  .grid.week .day .dhead{padding-bottom:4px;font-size:12px}
+  .grid.week .meal{padding:6px 6px 6px 8px;border-radius:8px;font-size:12px}
+  .grid.week .meal .mimg{height:34px;margin-bottom:3px}
+  .grid.week .meal .nm{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .grid.week .meal .slot{font-size:10px}
+  .grid.week .meal .tags{margin-top:3px}
+  .grid.week .tag{font-size:9px;padding:1px 4px}
+  .grid.week .meal .ck{top:4px;right:4px;width:15px;height:15px;font-size:9px}
+  .grid.week .meal .del{top:4px;left:4px;width:16px;height:16px;font-size:8px}
+  .grid.week .meal.empty{font-size:10px;padding:5px 6px}
+  .grid.week .meal.add-more{font-size:9px;padding:3px 6px}
+  .grid.week .clear-day{font-size:11px}
+  .dupe{outline:2px solid var(--warn);outline-offset:1px}
+  .mask{position:fixed;inset:0;background:rgba(60,45,35,.45);display:none;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto;z-index:50}
+  .mask.show{display:flex}
+  .modal{background:var(--panel);border-radius:18px;max-width:620px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+  .modal h2{margin:0;padding:18px 20px;font-size:18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal .body{padding:18px 20px;max-height:64vh;overflow:auto}
+  .modal .foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .x{border:0;background:transparent;font-size:20px;cursor:pointer;color:var(--muted)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;font-family:inherit;color:var(--ink)}
+  .field textarea{resize:vertical;min-height:64px}
+  .ing-row{display:flex;gap:6px;margin-bottom:6px}
+  .ing-row input{flex:1}
+  .ing-row .amt{width:90px;flex:none}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;cursor:pointer;font-size:12px;color:var(--muted)}
+  .pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .pill.al.on{background:#c0392b;border-color:#c0392b}
+  .ing-list{width:100%;border-collapse:collapse;margin-top:4px}
+  .ing-list td{border-bottom:1px solid var(--line);padding:7px 4px;font-size:13px}
+  .ing-list td:last-child{text-align:right;color:var(--muted)}
+  .steps{margin:0;padding-left:18px}
+  .steps li{margin-bottom:6px}
+  .lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media(max-width:560px){.lib-grid{grid-template-columns:1fr}}
+  .lib-card{border:1px solid var(--line);border-radius:12px;padding:9px 10px;cursor:pointer;display:flex;gap:10px;align-items:center}
+  .lib-card:hover{background:var(--accent-soft)}
+  .lib-card .limg{width:54px;height:54px;border-radius:8px;object-fit:cover;background:#faf4ee;flex:none}
+  .lib-card .lcn{font-weight:600;font-size:13px}
+  .lib-card .lct{font-size:11px;color:var(--muted);margin-top:2px}
+  .shop li{margin-bottom:8px}
+  .shop .sn{font-weight:600}
+  .shop .sa{color:var(--muted);font-size:12px;margin-left:6px}
+  .hero{position:relative;height:170px;border-radius:12px;overflow:hidden;background:#faf4ee;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .hero img{width:100%;height:100%;object-fit:cover}
+  .hero .hero-ph{font-size:56px;display:none}
+  .hero.noimg .hero-ph{display:block}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;opacity:0;transition:.25s;z-index:99;font-size:13px;max-width:80vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .note{font-size:12px;color:var(--muted);background:#fff7ef;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:14px}
+  .filt{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .filt .pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  @media print{
+    header .bar,header .stats,.toast,.btn{display:none!important}
+    body{background:#fff}
+    .meal{cursor:default;box-shadow:none}
+    .day{box-shadow:none;break-inside:avoid}
+    main{max-width:none}
+  }
+  /* 加载骨架屏 */
+  .skeleton{display:none;position:fixed;top:140px;left:0;right:0;text-align:center;padding:30px 20px;pointer-events:none;z-index:5}
+  .skeleton.show{display:block}
+  .skeleton .spinner{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .skeleton .sk-text{color:var(--muted);font-size:12px;background:rgba(255,255,255,.9);display:inline-block;padding:4px 12px;border-radius:12px}
+  /* ===== 手机端 ===== */
+  @media(max-width:480px){
+    header{padding:12px 14px 10px}
+    .title h1{font-size:17px}
+    .title .sub{font-size:11px;display:none}
+    .bar{gap:6px;margin-top:10px}
+    .seg button{padding:6px 12px;font-size:12px}
+    .nav .range{min-width:120px;font-size:11px}
+    .nav button{width:30px;height:30px;font-size:14px}
+    .btn{padding:7px 10px;font-size:11px;border-radius:8px}
+    .btn.sm{padding:4px 8px;font-size:10px}
+    main{padding:10px 10px 40px}
+    .grid{gap:10px}
+    .grid.week,.grid.three,.grid.week{grid-template-columns:1fr}
+    .day{padding:8px;gap:6px;border-radius:12px}
+    .day .dhead{padding-bottom:4px;font-size:13px}
+    .day .dhead .dt{font-size:11px}
+    .meal{padding:7px 8px;border-radius:10px}
+    .meal .mimg{height:42px;margin-bottom:4px}
+    .meal .nm{font-size:12px}
+    .meal .slot{font-size:10px}
+    .meal .tags{margin-top:4px}
+    .tag{font-size:9px;padding:1px 5px}
+    .meal .ck{top:6px;right:6px;width:16px;height:16px;font-size:10px}
+    .meal .del{top:6px;left:6px;width:18px;height:18px;font-size:9px}
+    .meal.empty{font-size:11px;padding:6px 8px}
+    .meal.add-more{padding:4px 6px;font-size:10px}
+    .clear-day{font-size:12px}
+    .mask{padding:10px 6px}
+    .modal{border-radius:14px}
+    .modal h2{padding:14px 16px;font-size:16px}
+    .modal .body{padding:14px 16px;max-height:55vh}
+    .modal .foot{padding:10px 16px}
+    .stats{gap:4px;margin-top:8px}
+    .stat{padding:4px 8px;font-size:10px}
+    .stat b{font-size:11px}
+    .hero{height:130px;margin-bottom:8px}
+    .lib-card{padding:7px 8px;gap:8px}
+    .lib-card .limg{width:42px;height:42px}
+    .lib-card .lcn{font-size:12px}
+    .lib-card .lct{font-size:10px}
+    .field input,.field textarea,.field select{padding:7px 8px;font-size:13px}
+    .ing-row .amt{width:70px}
+    .note{font-size:11px;padding:6px 10px;margin-bottom:10px}
+    .toast{font-size:11px;padding:8px 14px;bottom:16px}
+    .lib-add-row{gap:4px;margin-top:8px;padding-top:8px}
+    .lib-add-row .add-name{min-width:80px;font-size:11px}
+    .lib-add-row .add-cat{width:60px;font-size:11px}
+    .lib-add-row .add-prep{width:50px;font-size:11px}
+    .lib-tbl{font-size:10px}
+    .lib-tbl td{padding:5px 4px}
+    .lib-tbl th{padding:6px 4px;font-size:9px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <h1>🍽️ 宝宝餐饮日历</h1>
+    <span class="sub">适合 1 岁 4 个月（16 月龄）幼儿 · 数据按婴幼儿膳食指南整理 · 100 道餐品库</span>
+  </div>
+  <div class="bar">
+    <div class="seg" id="viewSeg">
+      <button data-v="week" class="on">周</button>
+      <button data-v="three">三天</button>
+    </div>
+    <div class="nav">
+      <button id="prev">‹</button>
+      <span class="range" id="rangeLabel"></span>
+      <button id="next">›</button>
+      <button class="btn ghost sm" id="todayBtn">今</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary" id="presetBtn">✨ 加载专家周计划</button>
+    <button class="btn" id="shopBtn">🛒 购物清单</button>
+    <button class="btn" id="autoBtn">🎲 随机填充空缺</button>
+    <button class="btn" id="printBtn">🖨️ 打印</button>
+    <button class="btn" id="ioBtn">📎 分享链接</button>
+    <button class="btn" id="libBtn">📦 餐品管理</button>
+  </div>
+  <div class="stats" id="statsBar"></div>
+</header>
+
+<main>
+  <div class="note">提示：所有数据存储在云端，家人打开同一链接即可共享菜单。点击卡片右上角 ✓ 标记已完成，左上角 🗑 直接删除。</div>
+  <div class="skeleton" id="skeleton"><div class="spinner"></div><div class="sk-text">正在从云端加载家庭数据…</div></div>
+  <div class="grid week" id="grid"></div>
+</main>
+
+<!-- 详情弹窗 -->
+<div class="mask" id="detailMask">
+  <div class="modal">
+    <h2><span id="dName">餐食详情</span><button class="x" data-close>×</button></h2>
+    <div class="body" id="dBody"></div>
+    <div class="foot">
+      <button class="btn" id="dFav">⭐ 收藏</button>
+      <button class="btn" id="dEdit">✏️ 编辑</button>
+      <button class="btn" id="dDel" style="color:#c0392b">🗑️ 删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑/新增弹窗 -->
+<div class="mask" id="editMask">
+  <div class="modal">
+    <h2><span id="eTitle">编辑餐食</span><button class="x" data-close>×</button></h2>
+    <div class="body">
+      <div class="field"><label>餐食名称</label><input id="eName" placeholder="如：南瓜小米粥" /></div>
+      <div class="field"><label>餐次</label>
+        <select id="eCat">
+          <option value="break">早餐</option>
+          <option value="lunch">午餐</option>
+          <option value="dinner">晚餐</option>
+        </select>
+      </div>
+      <div class="field"><label>准备耗时（分钟）</label><input id="ePrep" type="number" min="1" value="15" /></div>
+      <div class="field"><label>食材需求（名称 + 用量）</label>
+        <div id="eIng"></div>
+        <button class="btn ghost" id="eAddIng" style="margin-top:6px">＋ 添加食材</button>
+      </div>
+      <div class="field"><label>做法步骤（每行一条）</label><textarea id="eSteps" placeholder="第一步&#10;第二步"></textarea></div>
+      <div class="field"><label>营养标签</label><div class="chiprow" id="eTags"></div></div>
+      <div class="field"><label>过敏原提示</label><div class="chiprow" id="eAl"></div></div>
+    </div>
+    <div class="foot">
+      <button class="btn" data-close>取消</button>
+      <button class="btn primary" id="eSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 选择餐食库弹窗 -->
+<div class="mask" id="pickMask">
+  <div class="modal">
+    <h2><span id="pTitle">从餐食库选择</span><button class="x" data-close>×</button></h2>
+    <div class="body">
+      <div class="field"><input id="pSearch" placeholder="模糊搜索：餐名 / 食材 / 营养标签…" /></div>
+      <div class="filt" id="pFilt">
+        <span class="pill on" data-c="all">全部</span>
+        <span class="pill" data-c="break">🍳 早餐</span>
+        <span class="pill" data-c="lunch">🍚 午餐</span>
+        <span class="pill" data-c="dinner">🥣 晚餐</span>
+      </div>
+      <div class="lib-grid" id="pGrid"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="pCustom">✏️ 自定义新建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 购物清单弹窗 -->
+<div class="mask" id="shopMask">
+  <div class="modal">
+    <h2><span>🛒 购物清单（当前视图）</span><button class="x" data-close>×</button></h2>
+    <div class="body"><ul class="shop" id="shopList"></ul></div>
+    <div class="foot">
+      <button class="btn" id="shopCopy">📋 复制清单</button>
+      <button class="btn" data-close>关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入导出弹窗 -->
+<div class="mask" id="ioMask">
+  <div class="modal">
+    <h2><span>📎 分享给家人</span><button class="x" data-close>×</button></h2>
+    <div class="body">
+      <p class="note" style="margin-top:0">家人打开此链接即可共享菜单，数据自动云端同步。</p>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="shareUrl" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;font-family:inherit;color:var(--ink);background:#f8f8f8" readonly />
+        <button class="btn primary" id="shareCopy">📋 复制</button>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+      <details><summary style="cursor:pointer;font-size:12px;color:var(--muted);margin-bottom:8px">⚙️ 配置写入权限（仅发起人填一次）</summary>
+        <p class="note" style="margin-top:0;font-size:11px">填入 GitHub Personal Access Token（勾选 <code>repo</code> 权限）后，你的修改会同步到云端。家人无需填。</p>
+        <div style="display:flex;gap:6px">
+          <input id="ghTokenInput" type="password" placeholder="ghp_..." style="flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit" />
+          <button class="btn" id="ghTokenSave">保存</button>
+        </div>
+        <div id="ghTokenStatus" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+      </details>
+      <details><summary style="cursor:pointer;font-size:12px;color:var(--muted);margin-bottom:8px;margin-top:8px">高级：数据导入导出</summary>
+        <button class="btn" id="ioExport" style="margin-bottom:8px">⬇️ 导出 JSON</button>
+        <div class="field"><label>导入 JSON 文件</label><input id="ioFile" type="file" accept="application/json" /></div>
+      </details>
+    </div>
+    <div class="foot"><button class="btn" data-close>关闭</button></div>
+  </div>
+</div>
+
+<!-- 餐品管理弹窗 -->
+<div class="mask" id="libMask">
+  <div class="modal" style="max-width:720px">
+    <h2><span>📦 餐品库管理</span><button class="x" data-close>×</button></h2>
+    <div class="body">
+      <div class="field"><input id="libSearch" placeholder="搜索餐品名称..." /></div>
+      <div class="lib-wrapper">
+        <table class="lib-tbl">
+          <thead><tr><th>ID</th><th>餐次</th><th>名称</th><th>耗时</th><th>标签</th><th></th></tr></thead>
+          <tbody id="libTbody"></tbody>
+        </table>
+      </div>
+      <div class="lib-add-row">
+        <input class="add-name" id="libAddName" placeholder="新菜品名称" />
+        <select class="add-cat" id="libAddCat"><option value="break">早餐</option><option value="lunch">午餐</option><option value="dinner">晚餐</option></select>
+        <input class="add-prep" id="libAddPrep" type="number" min="1" value="15" placeholder="分钟" />
+        <button class="btn primary sm" id="libAddBtn">＋ 添加</button>
+      </div>
+    </div>
+    <div class="foot"><button class="btn" data-close>关闭</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 基础数据 ============ */
+const TAGS = ["优质蛋白","铁","钙","维生素C","膳食纤维","维生素A","锌","碳水能量","DHA","健康脂肪"];
+const ALLERGENS = ["蛋","奶","大豆","鱼","甲壳类","花生坚果","小麦","芝麻"];
+
+// 100 道餐品库（按专业营养视角整理，适合 16 月龄，软烂、少盐少糖、防噎）
+// 字段：id, cat(break/lunch/dinner), name, prep(分钟), ing[{n,a}], steps[], tags[], al[], img, video
+const LIBRARY = [
+// ===== 早餐 break (b01-b30) =====
+{id:"b01",cat:"break",name:"南瓜小米粥",prep:35,ing:[{n:"小米",a:"30g"},{n:"南瓜",a:"50g"}],steps:["小米浸泡20分钟","南瓜去皮切块同煮软烂","可压成泥"],tags:["膳食纤维","碳水能量","维生素A"],al:[],img:"images/b01.jpg",video:"https://v.douyin.com/GnKI1cFt6F0/"},
+{id:"b02",cat:"break",name:"鸡蛋羹",prep:15,ing:[{n:"鸡蛋",a:"1个"},{n:"温水/高汤",a:"100ml"},{n:"香油",a:"几滴"}],steps:["蛋液按1:1.5加温水","过筛去泡","盖保鲜膜扎孔蒸8分钟焖2分钟","滴香油"],tags:["优质蛋白","钙"],al:["蛋"],img:"images/b02.jpg",video:"https://v.douyin.com/dZYIyuiA_b8/"},
+{id:"b03",cat:"break",name:"山药瘦肉粥",prep:40,ing:[{n:"大米",a:"30g"},{n:"山药",a:"40g"},{n:"猪里脊",a:"20g"}],steps:["米煮粥","山药去皮切块","肉剁碎焯水","粥快好时加山药肉末煮10分钟"],tags:["优质蛋白","碳水能量","锌"],al:[],img:"images/b03.jpg",video:"https://v.douyin.com/1P6LbLGbaPc/"},
+{id:"b04",cat:"break",name:"香蕉牛奶燕麦糊",prep:12,ing:[{n:"燕麦片",a:"30g"},{n:"配方奶/牛奶",a:"150ml"},{n:"香蕉",a:"半根"}],steps:["燕麦加奶小火煮软","香蕉压成泥拌入"],tags:["钙","碳水能量","膳食纤维"],al:["奶"],img:"images/b04.jpg",video:"https://v.douyin.com/Zt76wI-6Z4U/"},
+{id:"b05",cat:"break",name:"红薯粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"红薯",a:"50g"}],steps:["米煮粥","红薯去皮切块同煮软烂压泥"],tags:["膳食纤维","碳水能量","维生素A"],al:[],img:"images/b05.jpg",video:"https://v.douyin.com/ILnq80frlSs/"},
+{id:"b06",cat:"break",name:"蔬菜鸡蛋软饼",prep:18,ing:[{n:"鸡蛋",a:"1个"},{n:"面粉",a:"20g"},{n:"胡萝卜/西蓝花",a:"20g"},{n:"配方奶",a:"少许"}],steps:["蔬菜切碎焯水","蛋液加面粉蔬菜碎调糊","小火摊薄饼两面煎熟","切条方便抓食"],tags:["优质蛋白","维生素A","膳食纤维"],al:["蛋","小麦"],img:"images/b06.jpg",video:"https://v.douyin.com/Oyn1qOTLMRk/"},
+{id:"b07",cat:"break",name:"奶酪土豆泥",prep:15,ing:[{n:"土豆",a:"50g"},{n:"奶酪",a:"10g"}],steps:["土豆蒸熟压成泥","拌入奶酪趁热融化"],tags:["钙","碳水能量"],al:["奶"],img:"images/b07.jpg",video:"https://v.douyin.com/iGiZz5t7hiY/"},
+{id:"b08",cat:"break",name:"苹果小米粥",prep:30,ing:[{n:"小米",a:"30g"},{n:"苹果",a:"半个"}],steps:["小米煮粥","苹果去皮切小丁同煮软"],tags:["膳食纤维","维生素C","碳水能量"],al:[],img:"images/b08.jpg",video:"https://v.douyin.com/hA9ZGy_iP5Q/"},
+{id:"b09",cat:"break",name:"紫薯粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"紫薯",a:"50g"}],steps:["米煮粥","紫薯去皮切块同煮软"],tags:["膳食纤维","碳水能量"],al:[],img:"images/b09.jpg",video:"https://v.douyin.com/y9na7jAaUjA/"},
+{id:"b10",cat:"break",name:"西兰花土豆泥",prep:20,ing:[{n:"土豆",a:"50g"},{n:"西兰花",a:"30g"}],steps:["土豆蒸熟压泥","西兰花焯水切碎拌入"],tags:["膳食纤维","维生素C","碳水能量"],al:[],img:"images/b10.jpg",video:"https://v.douyin.com/OAaZbL5aEZc/"},
+{id:"b11",cat:"break",name:"胡萝卜鸡肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"鸡胸肉",a:"20g"},{n:"胡萝卜",a:"20g"}],steps:["米煮粥","鸡肉胡萝卜切碎焯水加入煮10分钟"],tags:["优质蛋白","维生素A","锌"],al:[],img:"images/b11.jpg",video:"https://v.douyin.com/rrjKLOuFl5o/"},
+{id:"b12",cat:"break",name:"三文鱼蔬菜蛋羹",prep:18,ing:[{n:"三文鱼",a:"20g"},{n:"鸡蛋",a:"1个"},{n:"菠菜",a:"少许"}],steps:["三文鱼蒸熟去刺压碎","蛋液混合蒸8分钟","拌入蔬菜碎"],tags:["优质蛋白","DHA","铁"],al:["鱼","蛋"],img:"images/b12.jpg",video:""},
+{id:"b13",cat:"break",name:"玉米糊",prep:15,ing:[{n:"玉米面",a:"30g"},{n:"配方奶/牛奶",a:"100ml"}],steps:["玉米面调成稀糊","加奶小火煮至顺滑"],tags:["碳水能量","钙","膳食纤维"],al:["奶"],img:"images/b13.jpg",video:""},
+{id:"b14",cat:"break",name:"红枣泥米糊",prep:25,ing:[{n:"米粉",a:"30g"},{n:"红枣",a:"3颗"}],steps:["红枣去核蒸熟压泥","拌入冲好的米糊"],tags:["铁","碳水能量"],al:[],img:"images/b14.jpg",video:""},
+{id:"b15",cat:"break",name:"番茄豆腐羹",prep:18,ing:[{n:"嫩豆腐",a:"50g"},{n:"番茄",a:"半个"}],steps:["番茄去皮炒出汁","豆腐压碎同煮","勾薄芡"],tags:["钙","优质蛋白","维生素C"],al:["大豆"],img:"images/b15.jpg",video:""},
+{id:"b16",cat:"break",name:"鳕鱼蔬菜粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"鳕鱼",a:"30g"},{n:"胡萝卜",a:"20g"}],steps:["米煮粥","鳕鱼蒸熟去刺压碎","蔬菜切碎拌入"],tags:["优质蛋白","DHA","维生素A"],al:["鱼"],img:"images/b16.jpg",video:""},
+{id:"b17",cat:"break",name:"菠菜鸡蛋面",prep:20,ing:[{n:"宝宝面条",a:"30g"},{n:"鸡蛋",a:"1个"},{n:"菠菜",a:"20g"}],steps:["面条煮软","鸡蛋炒碎","菠菜焯水切碎拌入"],tags:["优质蛋白","铁","维生素C"],al:["蛋","小麦"],img:"images/b17.jpg",video:""},
+{id:"b18",cat:"break",name:"全麦吐司牛油果泥",prep:10,ing:[{n:"全麦吐司",a:"1片"},{n:"牛油果",a:"半个"}],steps:["吐司烤软","牛油果压泥涂抹","切条"],tags:["膳食纤维","健康脂肪","碳水能量"],al:["小麦"],img:"images/b18.jpg",video:""},
+{id:"b19",cat:"break",name:"燕麦牛奶布丁",prep:12,ing:[{n:"燕麦片",a:"30g"},{n:"配方奶/牛奶",a:"150ml"},{n:"蛋黄",a:"半个"}],steps:["燕麦加奶煮软","拌入熟蛋黄泥"],tags:["钙","优质蛋白","碳水能量"],al:["奶","蛋"],img:"images/b19.jpg",video:""},
+{id:"b20",cat:"break",name:"南瓜发糕",prep:30,ing:[{n:"南瓜",a:"50g"},{n:"面粉",a:"30g"},{n:"酵母",a:"少许"}],steps:["南瓜蒸熟压泥","加面粉酵母发酵","蒸20分钟"],tags:["膳食纤维","碳水能量","维生素A"],al:["小麦"],img:"images/b20.jpg",video:""},
+{id:"b21",cat:"break",name:"鸡肉蔬菜小馄饨",prep:30,ing:[{n:"鸡胸肉",a:"30g"},{n:"青菜",a:"20g"},{n:"馄饨皮",a:"适量"}],steps:["肉菜调馅包小馄饨","水开后煮熟"],tags:["优质蛋白","锌","膳食纤维"],al:["小麦"],img:"images/b21.jpg",video:""},
+{id:"b22",cat:"break",name:"小米山药红枣粥",prep:35,ing:[{n:"小米",a:"30g"},{n:"山药",a:"30g"},{n:"红枣",a:"2颗"}],steps:["小米煮粥","山药红枣切块同煮软"],tags:["膳食纤维","铁","碳水能量"],al:[],img:"images/b22.jpg",video:""},
+{id:"b23",cat:"break",name:"紫薯牛奶羹",prep:15,ing:[{n:"紫薯",a:"50g"},{n:"配方奶/牛奶",a:"150ml"}],steps:["紫薯蒸熟压泥","加奶调匀"],tags:["钙","膳食纤维","碳水能量"],al:["奶"],img:"images/b23.jpg",video:""},
+{id:"b24",cat:"break",name:"蔬菜肉末软饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"猪肉末",a:"20g"},{n:"青菜",a:"20g"}],steps:["肉末蔬菜炒散","拌入软饭"],tags:["铁","优质蛋白","膳食纤维"],al:[],img:"images/b24.jpg",video:""},
+{id:"b25",cat:"break",name:"蛋黄豆腐羹",prep:15,ing:[{n:"嫩豆腐",a:"50g"},{n:"蛋黄",a:"1个"}],steps:["豆腐压碎","熟蛋黄压泥拌入同煮"],tags:["钙","优质蛋白"],al:["大豆","蛋"],img:"images/b25.jpg",video:""},
+{id:"b26",cat:"break",name:"鲜虾蔬菜粥",prep:30,ing:[{n:"大米",a:"30g"},{n:"虾仁",a:"20g"},{n:"青菜",a:"20g"}],steps:["米煮粥","虾仁切碎焯水","蔬菜切碎拌入"],tags:["优质蛋白","钙","锌"],al:["甲壳类"],img:"images/b26.jpg",video:""},
+{id:"b27",cat:"break",name:"苹果山药泥",prep:18,ing:[{n:"苹果",a:"半个"},{n:"山药",a:"40g"}],steps:["分别蒸熟压泥","交替喂食"],tags:["膳食纤维","维生素C","碳水能量"],al:[],img:"images/b27.jpg",video:""},
+{id:"b28",cat:"break",name:"蓝莓酸奶燕麦",prep:10,ing:[{n:"燕麦片",a:"30g"},{n:"酸奶",a:"100g"},{n:"蓝莓",a:"少许"}],steps:["燕麦煮软放凉","拌入酸奶蓝莓"],tags:["钙","膳食纤维","维生素C"],al:["奶"],img:"images/b28.jpg",video:""},
+{id:"b29",cat:"break",name:"青菜肉丝面",prep:22,ing:[{n:"宝宝面条",a:"30g"},{n:"猪里脊",a:"20g"},{n:"青菜",a:"20g"}],steps:["肉丝青菜炒散","煮面软后混合"],tags:["铁","优质蛋白","膳食纤维"],al:["小麦"],img:"images/b29.jpg",video:""},
+{id:"b30",cat:"break",name:"芋头瘦肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"芋头",a:"50g"},{n:"瘦肉",a:"20g"}],steps:["米煮粥","芋头瘦肉切块同煮软烂"],tags:["优质蛋白","膳食纤维","锌"],al:[],img:"images/b30.jpg",video:""},
+
+// ===== 午餐 lunch (l01-l35) =====
+{id:"l01",cat:"lunch",name:"番茄牛肉碎碎面",prep:25,ing:[{n:"番茄",a:"半个"},{n:"牛肉末",a:"30g"},{n:"宝宝面条",a:"30g"}],steps:["番茄去皮切丁炒出汁","牛肉末炒散","加水煮面至软","混合"],tags:["铁","优质蛋白","维生素C"],al:["小麦"],img:"images/l01.jpg",video:"https://v.douyin.com/hTSGPYL_E10/"},
+{id:"l02",cat:"lunch",name:"三文鱼蔬菜粥",prep:35,ing:[{n:"三文鱼",a:"30g"},{n:"大米",a:"30g"},{n:"菠菜/胡萝卜",a:"20g"}],steps:["米煮粥","三文鱼蒸熟去刺压碎","蔬菜焯水切碎拌入"],tags:["优质蛋白","DHA","铁"],al:["鱼"],img:"images/l02.jpg",video:""},
+{id:"l03",cat:"lunch",name:"鸡肉西兰花软饭",prep:25,ing:[{n:"鸡胸肉",a:"30g"},{n:"西兰花",a:"30g"},{n:"软米饭",a:"1小碗"}],steps:["鸡肉煮熟剁碎","西兰花焯水切碎","拌入软饭"],tags:["优质蛋白","维生素C","锌"],al:[],img:"images/l03.jpg",video:""},
+{id:"l04",cat:"lunch",name:"豆腐青菜羹",prep:18,ing:[{n:"嫩豆腐",a:"50g"},{n:"小白菜",a:"30g"}],steps:["豆腐压碎","青菜焯水切碎","加水煮开勾薄芡"],tags:["钙","优质蛋白","膳食纤维"],al:["大豆"],img:"images/l04.jpg",video:""},
+{id:"l05",cat:"lunch",name:"虾仁蒸蛋",prep:18,ing:[{n:"虾仁",a:"20g"},{n:"鸡蛋",a:"1个"}],steps:["虾仁切小粒","蛋液加温水调匀拌入","蒸8分钟焖2分钟"],tags:["优质蛋白","钙","锌"],al:["蛋","甲壳类"],img:"images/l05.jpg",video:""},
+{id:"l06",cat:"lunch",name:"土豆炖牛肉末",prep:35,ing:[{n:"土豆",a:"50g"},{n:"牛肉末",a:"30g"},{n:"胡萝卜",a:"20g"}],steps:["土豆胡萝卜切块","牛肉末炒散","加水炖至软烂压碎"],tags:["铁","优质蛋白","碳水能量"],al:[],img:"images/l06.jpg",video:""},
+{id:"l07",cat:"lunch",name:"鳕鱼蔬菜泥",prep:25,ing:[{n:"鳕鱼",a:"30g"},{n:"南瓜/胡萝卜",a:"30g"}],steps:["鳕鱼蒸熟去刺","蔬菜蒸熟","同压泥或拌软饭"],tags:["优质蛋白","DHA","维生素A"],al:["鱼"],img:"images/l07.jpg",video:""},
+{id:"l08",cat:"lunch",name:"猪肉蔬菜小馄饨",prep:30,ing:[{n:"猪肉末",a:"30g"},{n:"青菜",a:"20g"},{n:"馄饨皮",a:"适量"}],steps:["肉菜调馅包小馄饨","水煮熟"],tags:["优质蛋白","铁","膳食纤维"],al:["小麦"],img:"images/l08.jpg",video:""},
+{id:"l09",cat:"lunch",name:"番茄龙利鱼面",prep:25,ing:[{n:"龙利鱼",a:"30g"},{n:"番茄",a:"半个"},{n:"宝宝面条",a:"30g"}],steps:["鱼蒸熟去刺压碎","番茄炒出汁","煮面混合"],tags:["优质蛋白","DHA","维生素C"],al:["鱼","小麦"],img:"images/l09.jpg",video:""},
+{id:"l10",cat:"lunch",name:"香菇鸡肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"鸡胸肉",a:"30g"},{n:"香菇",a:"20g"}],steps:["米煮粥","鸡肉香菇切碎焯水加入煮10分钟"],tags:["优质蛋白","锌","膳食纤维"],al:[],img:"images/l10.jpg",video:""},
+{id:"l11",cat:"lunch",name:"牛肉蔬菜软饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"牛肉末",a:"30g"},{n:"胡萝卜西兰花",a:"20g"}],steps:["牛肉末蔬菜炒散","拌入软饭"],tags:["铁","优质蛋白","膳食纤维"],al:[],img:"images/l11.jpg",video:""},
+{id:"l12",cat:"lunch",name:"西兰花土豆鸡肉饼",prep:22,ing:[{n:"鸡胸肉",a:"30g"},{n:"土豆",a:"30g"},{n:"西兰花",a:"20g"}],steps:["土豆蒸熟压泥","鸡肉西兰花剁碎混合","小火煎成小饼"],tags:["优质蛋白","膳食纤维","锌"],al:[],img:"images/l12.jpg",video:"https://v.douyin.com/24ha81_LV-g/"},
+{id:"l13",cat:"lunch",name:"胡萝卜牛肉碎饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"牛肉末",a:"30g"},{n:"胡萝卜",a:"30g"}],steps:["牛肉末胡萝卜炒散","拌入软饭"],tags:["铁","优质蛋白","维生素A"],al:[],img:"images/l13.jpg",video:""},
+{id:"l14",cat:"lunch",name:"豆腐虾仁蒸蛋",prep:18,ing:[{n:"嫩豆腐",a:"30g"},{n:"虾仁",a:"15g"},{n:"鸡蛋",a:"1个"}],steps:["蛋液混合豆腐碎虾仁","蒸8分钟焖2分钟"],tags:["钙","优质蛋白","锌"],al:["蛋","大豆","甲壳类"],img:"images/l14.jpg",video:""},
+{id:"l15",cat:"lunch",name:"南瓜鸡肉焖饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"鸡胸肉",a:"30g"},{n:"南瓜",a:"40g"}],steps:["鸡肉南瓜炒软","加少许水焖入饭"],tags:["优质蛋白","维生素A","碳水能量"],al:[],img:"images/l15.jpg",video:""},
+{id:"l16",cat:"lunch",name:"菠菜猪肝粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"猪肝",a:"20g"},{n:"菠菜",a:"20g"}],steps:["米煮粥","猪肝剁碎焯水","菠菜切碎拌入"],tags:["铁","优质蛋白","维生素A"],al:[],img:"images/l16.jpg",video:""},
+{id:"l17",cat:"lunch",name:"鲜虾蔬菜面",prep:22,ing:[{n:"宝宝面条",a:"30g"},{n:"虾仁",a:"20g"},{n:"青菜",a:"20g"}],steps:["虾仁炒散","煮面软","拌青菜"],tags:["优质蛋白","钙","膳食纤维"],al:["甲壳类","小麦"],img:"images/l17.jpg",video:""},
+{id:"l18",cat:"lunch",name:"肉末茄子软饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"猪肉末",a:"20g"},{n:"茄子",a:"30g"}],steps:["茄子蒸熟压泥","肉末炒散拌饭"],tags:["优质蛋白","膳食纤维"],al:[],img:"images/l18.jpg",video:""},
+{id:"l19",cat:"lunch",name:"彩蔬鸡肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"鸡胸肉",a:"20g"},{n:"彩椒胡萝卜",a:"20g"}],steps:["米煮粥","鸡肉蔬菜切碎加入煮10分钟"],tags:["优质蛋白","维生素C","锌"],al:[],img:"images/l19.jpg",video:""},
+{id:"l20",cat:"lunch",name:"三文鱼蔬菜饼",prep:22,ing:[{n:"三文鱼",a:"30g"},{n:"土豆",a:"30g"},{n:"胡萝卜",a:"20g"}],steps:["土豆蒸熟压泥","三文鱼压碎混合","小火煎小饼"],tags:["优质蛋白","DHA","维生素A"],al:["鱼"],img:"images/l20.jpg",video:"https://v.douyin.com/swtfu6qIJTQ/"},
+{id:"l21",cat:"lunch",name:"番茄肉末面",prep:22,ing:[{n:"宝宝面条",a:"30g"},{n:"猪肉末",a:"20g"},{n:"番茄",a:"半个"}],steps:["番茄炒出汁","肉末炒散","煮面混合"],tags:["铁","优质蛋白","维生素C"],al:["小麦"],img:"images/l21.jpg",video:""},
+{id:"l22",cat:"lunch",name:"牛肉蔬菜小饺子",prep:35,ing:[{n:"牛肉末",a:"30g"},{n:"青菜",a:"20g"},{n:"饺子皮",a:"适量"}],steps:["调馅包小饺子","水煮熟"],tags:["铁","优质蛋白","膳食纤维"],al:["小麦"],img:"images/l22.jpg",video:""},
+{id:"l23",cat:"lunch",name:"玉米鸡肉馄饨",prep:30,ing:[{n:"鸡胸肉",a:"30g"},{n:"玉米",a:"20g"},{n:"馄饨皮",a:"适量"}],steps:["肉玉米调馅包馄饨","煮熟"],tags:["优质蛋白","锌","膳食纤维"],al:["小麦"],img:"images/l23.jpg",video:""},
+{id:"l24",cat:"lunch",name:"南瓜牛肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"牛肉末",a:"30g"},{n:"南瓜",a:"50g"}],steps:["米煮粥","牛肉末南瓜同煮软"],tags:["铁","优质蛋白","维生素A"],al:[],img:"images/l24.jpg",video:""},
+{id:"l25",cat:"lunch",name:"豆腐蔬菜肉末饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"猪肉末",a:"20g"},{n:"豆腐",a:"30g"},{n:"青菜",a:"20g"}],steps:["肉末豆腐青菜炒散","拌饭"],tags:["钙","优质蛋白","膳食纤维"],al:["大豆"],img:"images/l25.jpg",video:""},
+{id:"l26",cat:"lunch",name:"鳕鱼时蔬软饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"鳕鱼",a:"30g"},{n:"西兰花胡萝卜",a:"20g"}],steps:["鳕鱼蒸熟去刺","蔬菜切碎拌饭"],tags:["优质蛋白","DHA","维生素A"],al:["鱼"],img:"images/l26.jpg",video:"https://v.douyin.com/LEU9F3AWUXI/"},
+{id:"l27",cat:"lunch",name:"鸡蛋蔬菜炒饭",prep:20,ing:[{n:"软米饭",a:"1小碗"},{n:"鸡蛋",a:"1个"},{n:"豌豆胡萝卜",a:"20g"}],steps:["蛋炒散","蔬菜焯水","拌饭翻炒"],tags:["优质蛋白","维生素A","膳食纤维"],al:["蛋"],img:"images/l27.jpg",video:""},
+{id:"l28",cat:"lunch",name:"土豆鸡肉焖饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"鸡胸肉",a:"30g"},{n:"土豆",a:"30g"}],steps:["鸡肉土豆炒软","焖入饭"],tags:["优质蛋白","锌","碳水能量"],al:[],img:"images/l28.jpg",video:""},
+{id:"l29",cat:"lunch",name:"胡萝卜虾仁粥",prep:30,ing:[{n:"大米",a:"30g"},{n:"虾仁",a:"20g"},{n:"胡萝卜",a:"20g"}],steps:["米煮粥","虾仁胡萝卜切碎拌入"],tags:["优质蛋白","钙","维生素A"],al:["甲壳类"],img:"images/l29.jpg",video:""},
+{id:"l30",cat:"lunch",name:"青菜肉末面",prep:22,ing:[{n:"宝宝面条",a:"30g"},{n:"猪肉末",a:"20g"},{n:"青菜",a:"20g"}],steps:["肉末炒散","煮面软","拌青菜"],tags:["铁","优质蛋白","膳食纤维"],al:["小麦"],img:"images/l30.jpg",video:""},
+{id:"l31",cat:"lunch",name:"番茄豆腐鱼片",prep:25,ing:[{n:"龙利鱼",a:"30g"},{n:"番茄",a:"半个"},{n:"嫩豆腐",a:"30g"}],steps:["鱼蒸熟去刺","番茄炒出汁","豆腐鱼片同煮"],tags:["优质蛋白","DHA","钙","维生素C"],al:["鱼","大豆"],img:"images/l31.jpg",video:""},
+{id:"l32",cat:"lunch",name:"玉米牛肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"牛肉末",a:"30g"},{n:"玉米",a:"20g"}],steps:["米煮粥","牛肉末玉米同煮软"],tags:["铁","优质蛋白","膳食纤维"],al:[],img:"images/l32.jpg",video:""},
+{id:"l33",cat:"lunch",name:"西兰花牛肉面",prep:25,ing:[{n:"宝宝面条",a:"30g"},{n:"牛肉末",a:"30g"},{n:"西兰花",a:"30g"}],steps:["牛肉末炒散","煮面软","拌西兰花"],tags:["铁","优质蛋白","维生素C"],al:["小麦"],img:"images/l33.jpg",video:""},
+{id:"l34",cat:"lunch",name:"鸡肉蔬菜小饭团",prep:20,ing:[{n:"软米饭",a:"1小碗"},{n:"鸡胸肉",a:"20g"},{n:"海苔碎",a:"少许"}],steps:["鸡肉剁碎拌饭","捏小饭团沾海苔"],tags:["优质蛋白","锌","碳水能量"],al:[],img:"images/l34.jpg",video:"https://v.douyin.com/A_buOhJvPBg/"},
+{id:"l35",cat:"lunch",name:"鲜虾时蔬粥",prep:30,ing:[{n:"大米",a:"30g"},{n:"虾仁",a:"20g"},{n:"西兰花胡萝卜",a:"20g"}],steps:["米煮粥","虾仁蔬菜切碎拌入"],tags:["优质蛋白","钙","膳食纤维"],al:["甲壳类"],img:"images/l35.jpg",video:""},
+
+// ===== 晚餐 dinner (d01-d35) =====
+{id:"d01",cat:"dinner",name:"蔬菜肉末粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"猪肉末",a:"20g"},{n:"青菜/胡萝卜",a:"20g"}],steps:["米煮粥","肉末蔬菜焯水","粥快好时加入煮10分钟"],tags:["铁","优质蛋白","膳食纤维"],al:[],img:"images/d01.jpg",video:""},
+{id:"d02",cat:"dinner",name:"南瓜蒸排骨(去骨肉)",prep:25,ing:[{n:"排骨肉",a:"30g"},{n:"南瓜",a:"50g"}],steps:["排骨肉焯水去骨剁碎","南瓜切块铺底","肉放上面蒸20分钟至软"],tags:["钙","优质蛋白","锌"],al:[],note:"务必去骨防噎",img:"images/d02.jpg",video:"https://v.douyin.com/mmIkb0TmxfY/"},
+{id:"d03",cat:"dinner",name:"豆腐虾仁蒸蛋",prep:18,ing:[{n:"嫩豆腐",a:"30g"},{n:"虾仁",a:"15g"},{n:"鸡蛋",a:"1个"}],steps:["蛋液混合豆腐碎虾仁","蒸8分钟焖2分钟"],tags:["钙","优质蛋白","锌"],al:["蛋","大豆","甲壳类"],img:"images/d03.jpg",video:""},
+{id:"d04",cat:"dinner",name:"紫薯粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"紫薯",a:"50g"}],steps:["米煮粥","紫薯去皮切块同煮软"],tags:["膳食纤维","碳水能量"],al:[],img:"images/d04.jpg",video:""},
+{id:"d05",cat:"dinner",name:"瘦肉青菜面",prep:25,ing:[{n:"猪里脊",a:"20g"},{n:"青菜",a:"20g"},{n:"宝宝面条",a:"30g"}],steps:["肉末青菜炒散","煮面软后混合"],tags:["铁","优质蛋白","膳食纤维"],al:["小麦"],img:"images/d05.jpg",video:""},
+{id:"d06",cat:"dinner",name:"鸡肉蔬菜粥",prep:35,ing:[{n:"鸡胸肉",a:"30g"},{n:"香菇/胡萝卜",a:"20g"},{n:"大米",a:"30g"}],steps:["米煮粥","鸡肉蔬菜切碎焯水加入煮10分钟"],tags:["优质蛋白","锌","膳食纤维"],al:[],img:"images/d06.jpg",video:""},
+{id:"d07",cat:"dinner",name:"蒸蛋羹配蔬菜",prep:15,ing:[{n:"鸡蛋",a:"1个"},{n:"西蓝花/胡萝卜",a:"适量"}],steps:["蒸蛋羹","蔬菜蒸熟压泥伴食"],tags:["优质蛋白","维生素C"],al:["蛋"],img:"images/d07.jpg",video:""},
+{id:"d08",cat:"dinner",name:"山药紫薯双拼泥",prep:20,ing:[{n:"山药",a:"30g"},{n:"紫薯",a:"30g"}],steps:["分别蒸熟","各自压成泥","交替喂食"],tags:["膳食纤维","碳水能量"],al:[],img:"images/d08.jpg",video:"https://v.douyin.com/fRo_LnIrP2c/"},
+{id:"d09",cat:"dinner",name:"番茄牛肉烩饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"牛肉末",a:"30g"},{n:"番茄",a:"半个"}],steps:["番茄炒出汁","牛肉末炒散","烩入饭"],tags:["铁","优质蛋白","维生素C"],al:[],img:"images/d09.jpg",video:"https://v.douyin.com/MYwL_-19p8E/"},
+{id:"d10",cat:"dinner",name:"鳕鱼蔬菜泥(晚)",prep:25,ing:[{n:"鳕鱼",a:"30g"},{n:"南瓜/胡萝卜",a:"30g"}],steps:["鳕鱼蒸熟去刺","蔬菜蒸熟同压泥"],tags:["优质蛋白","DHA","维生素A"],al:["鱼"],img:"images/d10.jpg",video:""},
+{id:"d11",cat:"dinner",name:"南瓜小米粥(晚)",prep:35,ing:[{n:"小米",a:"30g"},{n:"南瓜",a:"50g"}],steps:["小米浸泡","南瓜切块同煮软烂"],tags:["膳食纤维","碳水能量","维生素A"],al:[],img:"images/d11.jpg",video:""},
+{id:"d12",cat:"dinner",name:"豆腐肉末蒸蛋",prep:18,ing:[{n:"嫩豆腐",a:"30g"},{n:"猪肉末",a:"20g"},{n:"鸡蛋",a:"1个"}],steps:["蛋液混合豆腐肉末蒸8分钟"],tags:["钙","优质蛋白","铁"],al:["蛋","大豆"],img:"images/d12.jpg",video:""},
+{id:"d13",cat:"dinner",name:"土豆牛肉焖饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"牛肉末",a:"30g"},{n:"土豆",a:"30g"}],steps:["牛肉末土豆炒软","焖入饭"],tags:["铁","优质蛋白","碳水能量"],al:[],img:"images/d13.jpg",video:"https://v.douyin.com/wrtvz3BqCCk/"},
+{id:"d14",cat:"dinner",name:"西兰花鸡肉面",prep:25,ing:[{n:"宝宝面条",a:"30g"},{n:"鸡胸肉",a:"30g"},{n:"西兰花",a:"30g"}],steps:["鸡肉炒散","煮面软","拌西兰花"],tags:["优质蛋白","维生素C","锌"],al:["小麦"],img:"images/d14.jpg",video:""},
+{id:"d15",cat:"dinner",name:"胡萝卜瘦肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"猪里脊",a:"20g"},{n:"胡萝卜",a:"20g"}],steps:["米煮粥","肉末胡萝卜切碎加入"],tags:["铁","优质蛋白","维生素A"],al:[],img:"images/d15.jpg",video:""},
+{id:"d16",cat:"dinner",name:"鲜虾蔬菜豆腐羹",prep:18,ing:[{n:"嫩豆腐",a:"30g"},{n:"虾仁",a:"20g"},{n:"青菜",a:"20g"}],steps:["豆腐压碎","虾仁青菜切碎同煮"],tags:["钙","优质蛋白","膳食纤维"],al:["甲壳类","大豆"],img:"images/d16.jpg",video:""},
+{id:"d17",cat:"dinner",name:"青菜肉丝面",prep:22,ing:[{n:"宝宝面条",a:"30g"},{n:"猪里脊",a:"20g"},{n:"青菜",a:"20g"}],steps:["肉丝青菜炒散","煮面软混合"],tags:["铁","优质蛋白","膳食纤维"],al:["小麦"],img:"images/d17.jpg",video:""},
+{id:"d18",cat:"dinner",name:"山药排骨粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"排骨肉",a:"30g"},{n:"山药",a:"30g"}],steps:["米煮粥","排骨肉去骨剁碎山药切块同煮"],tags:["钙","优质蛋白","锌"],al:[],img:"images/d18.jpg",video:""},
+{id:"d19",cat:"dinner",name:"番茄鱼片粥",prep:30,ing:[{n:"大米",a:"30g"},{n:"龙利鱼",a:"30g"},{n:"番茄",a:"半个"}],steps:["米煮粥","鱼蒸熟去刺","番茄炒汁拌入"],tags:["优质蛋白","DHA","维生素C"],al:["鱼"],img:"images/d19.jpg",video:""},
+{id:"d20",cat:"dinner",name:"南瓜鸡肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"鸡胸肉",a:"30g"},{n:"南瓜",a:"40g"}],steps:["米煮粥","鸡肉南瓜切碎加入"],tags:["优质蛋白","维生素A","锌"],al:[],img:"images/d20.jpg",video:""},
+{id:"d21",cat:"dinner",name:"鸡蛋蔬菜软饼(晚)",prep:18,ing:[{n:"鸡蛋",a:"1个"},{n:"面粉",a:"20g"},{n:"蔬菜",a:"20g"}],steps:["蛋液加粉蔬菜碎调糊","煎熟切条"],tags:["优质蛋白","膳食纤维"],al:["蛋","小麦"],img:"images/d21.jpg",video:""},
+{id:"d22",cat:"dinner",name:"牛肉蔬菜粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"牛肉末",a:"30g"},{n:"青菜胡萝卜",a:"20g"}],steps:["米煮粥","牛肉末蔬菜同煮软"],tags:["铁","优质蛋白","膳食纤维"],al:[],img:"images/d22.jpg",video:""},
+{id:"d23",cat:"dinner",name:"豆腐虾仁面",prep:22,ing:[{n:"宝宝面条",a:"30g"},{n:"虾仁",a:"20g"},{n:"嫩豆腐",a:"30g"}],steps:["虾仁豆腐炒散","煮面软混合"],tags:["钙","优质蛋白","膳食纤维"],al:["甲壳类","大豆","小麦"],img:"images/d23.jpg",video:"https://v.douyin.com/C2CpDDsFbBc/"},
+{id:"d24",cat:"dinner",name:"紫薯牛奶羹(晚)",prep:15,ing:[{n:"紫薯",a:"50g"},{n:"配方奶/牛奶",a:"150ml"}],steps:["紫薯蒸熟压泥","加奶调匀"],tags:["钙","膳食纤维","碳水能量"],al:["奶"],img:"images/d24.jpg",video:""},
+{id:"d25",cat:"dinner",name:"西兰花土豆牛肉泥",prep:25,ing:[{n:"土豆",a:"30g"},{n:"牛肉末",a:"30g"},{n:"西兰花",a:"20g"}],steps:["土豆蒸熟","牛肉末西兰花剁碎混合压泥"],tags:["铁","优质蛋白","膳食纤维"],al:[],img:"images/d25.jpg",video:""},
+{id:"d26",cat:"dinner",name:"鸡肉香菇粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"鸡胸肉",a:"30g"},{n:"香菇",a:"20g"}],steps:["米煮粥","鸡肉香菇切碎加入"],tags:["优质蛋白","锌","膳食纤维"],al:[],img:"images/d26.jpg",video:""},
+{id:"d27",cat:"dinner",name:"鲜虾蒸蛋",prep:18,ing:[{n:"虾仁",a:"20g"},{n:"鸡蛋",a:"1个"}],steps:["蛋液加水拌入虾仁蒸8分钟"],tags:["优质蛋白","钙","锌"],al:["蛋","甲壳类"],img:"images/d27.jpg",video:""},
+{id:"d28",cat:"dinner",name:"蔬菜肉末软饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"猪肉末",a:"20g"},{n:"青菜",a:"20g"}],steps:["肉末蔬菜炒散","拌饭"],tags:["铁","优质蛋白","膳食纤维"],al:[],img:"images/d28.jpg",video:""},
+{id:"d29",cat:"dinner",name:"鳕鱼豆腐粥",prep:30,ing:[{n:"大米",a:"30g"},{n:"鳕鱼",a:"30g"},{n:"嫩豆腐",a:"30g"}],steps:["米煮粥","鳕鱼去刺豆腐压碎拌入"],tags:["优质蛋白","DHA","钙"],al:["鱼","大豆"],img:"images/d29.jpg",video:""},
+{id:"d30",cat:"dinner",name:"瘦肉胡萝卜面",prep:22,ing:[{n:"宝宝面条",a:"30g"},{n:"猪里脊",a:"20g"},{n:"胡萝卜",a:"20g"}],steps:["肉末胡萝卜炒散","煮面软混合"],tags:["铁","优质蛋白","维生素A"],al:["小麦"],img:"images/d30.jpg",video:""},
+{id:"d31",cat:"dinner",name:"南瓜牛肉饭",prep:25,ing:[{n:"软米饭",a:"1小碗"},{n:"牛肉末",a:"30g"},{n:"南瓜",a:"40g"}],steps:["牛肉末南瓜炒软","拌饭"],tags:["铁","优质蛋白","维生素A"],al:[],img:"images/d31.jpg",video:""},
+{id:"d32",cat:"dinner",name:"番茄鸡蛋面",prep:20,ing:[{n:"宝宝面条",a:"30g"},{n:"鸡蛋",a:"1个"},{n:"番茄",a:"半个"}],steps:["番茄炒出汁","蛋炒碎","煮面混合"],tags:["优质蛋白","维生素C"],al:["蛋","小麦"],img:"images/d32.jpg",video:""},
+{id:"d33",cat:"dinner",name:"山药鸡肉粥",prep:35,ing:[{n:"大米",a:"30g"},{n:"鸡胸肉",a:"30g"},{n:"山药",a:"30g"}],steps:["米煮粥","鸡肉山药切碎加入"],tags:["优质蛋白","锌","膳食纤维"],al:[],img:"images/d33.jpg",video:""},
+{id:"d34",cat:"dinner",name:"豆腐蔬菜羹(晚)",prep:18,ing:[{n:"嫩豆腐",a:"50g"},{n:"小白菜",a:"30g"}],steps:["豆腐压碎","青菜切碎煮开勾芡"],tags:["钙","优质蛋白","膳食纤维"],al:["大豆"],img:"images/d34.jpg",video:""},
+{id:"d35",cat:"dinner",name:"紫薯山药泥",prep:20,ing:[{n:"紫薯",a:"30g"},{n:"山药",a:"30g"}],steps:["分别蒸熟压泥","交替喂食"],tags:["膳食纤维","碳水能量"],al:[],img:"images/d35.jpg",video:""},
+];
+
+// 专家周计划：7 天 × 3 餐，尽量不重样、覆盖蛋白/铁/钙
+const PRESET_WEEK = [
+  {break:"b01",lunch:"l01",dinner:"d01"},
+  {break:"b02",lunch:"l03",dinner:"d03"},
+  {break:"b03",lunch:"l02",dinner:"d05"},
+  {break:"b04",lunch:"l06",dinner:"d02"},
+  {break:"b05",lunch:"l04",dinner:"d06"},
+  {break:"b06",lunch:"l05",dinner:"d07"},
+  {break:"b07",lunch:"l07",dinner:"d08"},
+];
+
+const CAT_NAME = {break:"早餐",lunch:"午餐",dinner:"晚餐"};
+const WD = ["日","一","二","三","四","五","六"];
+
+/* ============ 状态 ============ */
+const KEY = "babyMealCalendar.v2";
+const GH_USER = "DTEE-SH";
+const GH_REPO = "baby-meals";
+const GH_FILE = "data.json";
+const GH_BRANCH = "gh-pages";
+const DATA_URL = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/${GH_BRANCH}/${GH_FILE}`;
+const SHARE_URL = `https://${GH_USER}.github.io/${GH_REPO}/`;
+
+// 先用 localStorage 秒开，云端数据到了再覆盖
+let state = normalizeLegacy(loadLocal() || {view:"week", anchor:todayISO(), calendar:{}, favorites:[]});
+let active = null;
+let pickCat = "all";
+let ghToken = null;     // GitHub PAT (写权限)
+let ghSha = null;       // data.json 的 SHA（GitHub 写文件必须）
+
+function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+ghToken = (loadLocal()||{})._ghToken || null; // 先尝试读 token
+
+function save(){
+  localStorage.setItem(KEY, JSON.stringify(state));
+  if(ghToken){
+    // 异步写 GitHub（任何人都能写，家庭共享关键）
+    fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`,{
+      method:"PUT",
+      headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
+      body:JSON.stringify({
+        message:"sync from meal calendar",
+        branch:GH_BRANCH,
+        sha:ghSha||undefined,
+        content:btoa(unescape(encodeURIComponent(JSON.stringify({
+          calendar:state.calendar,
+          favorites:state.favorites,
+          library:state.library,
+          updatedAt:new Date().toISOString()
+        },null,2))))
+      })
+    }).then(r=>r.json()).then(d=>{
+      if(d.content&&d.content.sha)ghSha=d.content.sha;
+      else console.warn("GitHub save:",d.message);
+    }).catch(e=>console.warn("GitHub save err:",e));
+  }
+}
+
+/* ---- 骨架屏 ---- */
+const skEl=document.getElementById("skeleton");
+skEl.classList.add("show");
+setTimeout(()=>skEl.classList.remove("show"),3000);
+
+/* ---- 从 GitHub 拉数据 ---- */
+fetch(DATA_URL+"?t="+Date.now())
+.then(r=>r.ok?r.json():null)
+.then(d=>{
+  if(d&&d.calendar&&Object.keys(d.calendar).length){
+    state.calendar=d.calendar;
+    state.favorites=d.favorites||[];
+    if(d.library)state.library=d.library;
+    state=normalizeLegacy(state);
+    save();render();
+    toast("☁️ 已从云端同步");
+  }
+  skEl.classList.remove("show");
+}).catch(e=>{
+  console.warn("GitHub read:",e);
+  skEl.classList.remove("show");
+});
+
+function normalizeLegacy(s){
+  if(!s.library||s.library.length<50)s.library=LIBRARY.map(x=>({...x,ing:x.ing.map(y=>({...y})),steps:[...x.steps],tags:[...x.tags],al:[...x.al]}));
+  if(s._v<3){
+    const videoMap={};LIBRARY.forEach(L=>{if(L.video)videoMap[L.id]=L.video;});
+    s.library.forEach(L=>{if(!L.video&&videoMap[L.id])L.video=videoMap[L.id];});
+  }
+  if(s._v>=2){s._v=3;return s;}
+  Object.values(s.calendar||{}).forEach(day=>{
+    ["break","lunch","dinner"].forEach(slot=>{
+      if(day[slot]&&!Array.isArray(day[slot]))day[slot]=[day[slot]];
+    });
+  });
+  s._v=3;return s;
+}
+function todayISO(){const d=new Date();return dateKey(d)}
+function dateKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parseKey(k){const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)}
+function addDays(k,n){const d=parseKey(k);d.setDate(d.getDate()+n);return dateKey(d)}
+function mondayOf(k){const d=parseKey(k);const w=d.getDay();const diff=(w===0?-6:1-w);d.setDate(d.getDate()+diff);return dateKey(d)}
+function libById(id){return state.library.find(x=>x.id===id)}
+
+function instFromLib(id){
+  const L=libById(id);if(!L)return null;
+  return {libId:id,name:L.name,cat:L.cat,prep:L.prep,
+    ing:L.ing.map(x=>({...x})),steps:[...L.steps],tags:[...L.tags],al:[...L.al],
+    custom:false,done:false,note:L.note||"",img:L.img||"",video:L.video||""};
+}
+
+/* ============ 渲染 ============ */
+function render(){
+  document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.v===state.view));
+  const grid=document.getElementById("grid");
+  grid.className="grid "+(state.view==="week"?"week":"three");
+  let days=[];
+  if(state.view==="week"){const m=mondayOf(state.anchor);for(let i=0;i<7;i++)days.push(addDays(m,i));}
+  else{for(let i=0;i<3;i++)days.push(addDays(state.anchor,i));}
+  const a=parseKey(days[0]),b=parseKey(days[days.length-1]);
+  document.getElementById("rangeLabel").textContent=
+    `${a.getMonth()+1}月${a.getDate()}日 - ${b.getMonth()+1}月${b.getDate()}日`;
+  const nameCount={};
+  days.forEach(k=>{["break","lunch","dinner"].forEach(s=>{
+    const arr=state.calendar[k]&&state.calendar[k][s];
+    if(arr)arr.forEach(it=>{if(it&&it.name)nameCount[it.name]=(nameCount[it.name]||0)+1;});
+  })});
+  const dupeNames=new Set(Object.keys(nameCount).filter(n=>nameCount[n]>1));
+  grid.innerHTML=days.map(k=>dayCard(k,dupeNames)).join("");
+  renderStats(days);
+  save();
+}
+
+function dayCard(k,dupeNames){
+  const d=parseKey(k);
+  const isToday=k===todayISO();
+  const data=state.calendar[k]||{};
+  const meals=["break","lunch","dinner"].map(s=>{
+    const arr=data[s]||[];
+    const cards=arr.map((it,idx)=>{
+      const dupe=dupeNames.has(it.name)?"dupe":"";
+      const tags=(it.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join("")
+        +(it.al&&it.al.length?`<span class="tag al">⚠${it.al.join("/")}</span>`:"");
+      return `<div class="meal ${it.cat} ${it.done?"done":""} ${dupe}" data-open="${k}|${s}|${idx}">
+        <div class="ck">${it.done?"✓":""}</div>
+        <button class="del" data-del="${k}|${s}|${idx}" title="删除">🗑</button>
+        ${it.img?`<img class="mimg" src="${it.img}" onerror="this.style.display='none'">`:""}
+        <div class="slot"><span>${CAT_NAME[s]}</span><span>⏱${it.prep}′</span></div>
+        <div class="nm">${it.name}</div>
+        <div class="tags">${tags}</div>
+      </div>`;
+    }).join("");
+    const addBtn=`<div class="meal empty add-more" data-add="${k}|${s}">＋ 加菜</div>`;
+    return `${cards}${addBtn}`;
+  }).join("");
+  return `<div class="day ${isToday?"today":""}">
+    <div class="dhead">
+      <span class="wd">周${WD[d.getDay()]}${isToday?" · 今":""}</span>
+      <span class="dt">${d.getMonth()+1}/${d.getDate()}</span>
+      <button class="clear-day" data-clear="${k}" title="清空当天">✕</button>
+    </div>
+    ${meals}
+  </div>`;
+}
+
+function renderStats(days){
+  let total=0,done=0,proteinDays=0,dupe=0;
+  const names={};
+  days.forEach(k=>{let hasProtein=false;["break","lunch","dinner"].forEach(s=>{
+    const arr=state.calendar[k]&&state.calendar[k][s];
+    if(arr)arr.forEach(it=>{
+      total++;if(it.done)done++;
+      if((it.tags||[]).includes("优质蛋白"))hasProtein=true;
+      if(it.name)names[it.name]=(names[it.name]||0)+1;
+    });
+  });if(hasProtein)proteinDays++;});
+  dupe=Object.values(names).filter(c=>c>1).length;
+  document.getElementById("statsBar").innerHTML=
+    `<span class="stat">已安排 <b>${total}</b> 餐</span>
+     <span class="stat">已完成 <b>${done}</b> 餐</span>
+     <span class="stat">含优质蛋白 <b>${proteinDays}</b>/${days.length} 天</span>
+     <span class="stat">重复餐 <b>${dupe}</b> 个${dupe?" ⚠":""}</span>`;
+}
+
+/* ============ 弹窗：详情 ============ */
+function openDetail(k,s,idx){
+  const arr=state.calendar[k]&&state.calendar[k][s];
+  if(!arr||!arr[idx])return;
+  const it=arr[idx];
+  active={date:k,slot:s,idx};
+  document.getElementById("dName").textContent=it.name;
+  const ing=it.ing.map(x=>`<tr><td>${x.n}</td><td>${x.a||""}</td></tr>`).join("");
+  const steps=it.steps.map(t=>`<li>${t}</li>`).join("");
+  const tags=(it.tags||[]).map(t=>`<span class="tag">${t}</span>`).join("")||"<span class='tag'>无</span>";
+  const al=(it.al||[]).length?it.al.map(t=>`<span class="tag al">⚠${t}</span>`).join(""):"<span class='tag'>无常见过敏原</span>";
+  const hero=it.img?`<div class="hero"><img src="${it.img}" onerror="this.style.display='none';this.parentNode.classList.add('noimg')"><div class="hero-ph">🍲</div></div>`
+                    :`<div class="hero noimg"><div class="hero-ph">🍲</div></div>`;
+  const vid=it.video?`<a class="btn primary" href="${it.video}" target="_blank" rel="noopener">▶ 在抖音看做法视频</a>`
+                    :`<span class="note" style="margin:0">抖音链接待补充（把链接发我，我写入对应菜品后即可一键跳转）</span>`;
+  document.getElementById("dBody").innerHTML=`
+    ${hero}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="tag">${CAT_NAME[it.cat]}</span><span class="tag">⏱ ${it.prep} 分钟</span>
+      ${it.custom?"<span class='tag'>自定义</span>":""}${it.done?"<span class='tag' style='background:#d8f3e6;color:#1c7a52'>✓ 已完成</span>":""}
+    </div>
+    <div class="field"><label>营养标签</label><div class="chiprow">${tags}</div></div>
+    <div class="field"><label>过敏原提示</label><div class="chiprow">${al}</div></div>
+    <div class="field"><label>食材需求</label><table class="ing-list"><tbody>${ing}</tbody></table></div>
+    <div class="field"><label>做法步骤</label><ol class="steps">${steps}</ol></div>
+    ${it.note?`<div class="note" style="margin-bottom:10px">⚠ 注意：${it.note}</div>`:""}
+    <div class="field"><label>抖音做法视频</label>${vid}</div>
+    ${it.libId?`<div class="note" style="margin-top:10px">来源：营养专家餐食库（${it.libId}）</div>`:""}`;
+  const favBtn=document.getElementById("dFav");
+  favBtn.textContent=state.favorites.includes(it.name)?"⭐ 已收藏":"⭐ 收藏";
+  show("detailMask");
+}
+
+/* ============ 弹窗：编辑/新增 ============ */
+let editBuf={ing:[],tags:[],al:[]};
+function openEditor(k,s,idx,existing){
+  active={date:k,slot:s,idx};
+  const it=existing||{name:"",cat:s,prep:15,ing:[{n:"",a:""}],steps:"",tags:[],al:[]};
+  document.getElementById("eTitle").textContent=existing?"编辑餐食":"新增餐食";
+  document.getElementById("eName").value=it.name||"";
+  document.getElementById("eCat").value=it.cat||s;
+  document.getElementById("ePrep").value=it.prep||15;
+  document.getElementById("eSteps").value=(it.steps||[]).join("\n");
+  editBuf.ing=(it.ing||[{n:"",a:""}]).map(x=>({...x}));
+  editBuf.tags=it.tags||[];
+  editBuf.al=it.al||[];
+  renderIngEditor();
+  document.getElementById("eTags").innerHTML=TAGS.map(t=>
+    `<span class="pill ${editBuf.tags.includes(t)?"on":""}" data-t="${t}">${t}</span>`).join("");
+  document.getElementById("eAl").innerHTML=ALLERGENS.map(a=>
+    `<span class="pill al ${editBuf.al.includes(a)?"on":""}" data-a="${a}">${a}</span>`).join("");
+  show("editMask");
+}
+function renderIngEditor(){
+  document.getElementById("eIng").innerHTML=editBuf.ing.map((x,i)=>
+    `<div class="ing-row"><input placeholder="食材名" value="${x.n||""}" data-i="${i}" data-k="n"/>
+     <input class="amt" placeholder="用量" value="${x.a||""}" data-i="${i}" data-k="a"/>
+     <button class="btn ghost" data-del="${i}">✕</button></div>`).join("");
+}
+document.getElementById("eAddIng").onclick=()=>{editBuf.ing.push({n:"",a:""});renderIngEditor()};
+document.getElementById("eIng").oninput=e=>{
+  const i=+e.target.dataset.i,k=e.target.dataset.k;if(i>=0)editBuf.ing[i][k]=e.target.value;
+};
+document.getElementById("eIng").onclick=e=>{
+  if(e.target.dataset.del!=null){editBuf.ing.splice(+e.target.dataset.del,1);renderIngEditor();}
+};
+document.getElementById("eTags").onclick=e=>{
+  if(!e.target.dataset.t)return;const t=e.target.dataset.t;
+  editBuf.tags.includes(t)?editBuf.tags=editBuf.tags.filter(x=>x!==t):editBuf.tags.push(t);
+  e.target.classList.toggle("on");
+};
+document.getElementById("eAl").onclick=e=>{
+  if(!e.target.dataset.a)return;const a=e.target.dataset.a;
+  editBuf.al.includes(a)?editBuf.al=editBuf.al.filter(x=>x!==a):editBuf.al.push(a);
+  e.target.classList.toggle("on");
+};
+document.getElementById("eSave").onclick=()=>{
+  const name=document.getElementById("eName").value.trim();
+  if(!name){toast("请填写餐食名称");return;}
+  const ing=editBuf.ing.filter(x=>x.n&&x.n.trim()).map(x=>({n:x.n.trim(),a:(x.a||"").trim()}));
+  const inst={libId:null,name,cat:document.getElementById("eCat").value,
+    prep:+document.getElementById("ePrep").value||15,ing,
+    steps:document.getElementById("eSteps").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    tags:editBuf.tags,al:editBuf.al,custom:true,done:false,img:"",video:""};
+  if(active.idx!=null)updateMeal(active.date,active.slot,active.idx,inst);
+  else setMeal(active.date,active.slot,inst);
+  hide("editMask");render();toast("已保存");
+};
+
+/* ============ 弹窗：选择餐食库 ============ */
+function openPicker(k,s){
+  active={date:k,slot:s};
+  document.getElementById("pTitle").textContent=`为周${WD[parseKey(k).getDay()]} ${CAT_NAME[s]} 选择餐食`;
+  document.getElementById("pSearch").value="";
+  pickCat="all";
+  document.querySelectorAll("#pFilt .pill").forEach(p=>p.classList.toggle("on",p.dataset.c==="all"));
+  renderPicker("");
+  show("pickMask");
+}
+function renderPicker(q){
+  q=q.trim().toLowerCase();
+  let list=state.library.filter(L=>{
+    if(pickCat!=="all"&&L.cat!==pickCat)return false;
+    if(!q)return true;
+    const hay=(L.name+" "+L.ing.map(x=>x.n).join(" ")+" "+(L.tags||[]).join(" ")).toLowerCase();
+    return hay.includes(q);
+  });
+  // 有视频链接的排前
+  list.sort((a,b)=>(b.video?1:0)-(a.video?1:0));
+  document.getElementById("pGrid").innerHTML=list.length?list.map(L=>
+    `<div class="lib-card" data-lib="${L.id}">
+       <img class="limg" src="${L.img}" onerror="this.style.visibility='hidden'">
+       <div><div class="lcn">${L.name}${L.video?` <span style="color:#fe2c55;font-size:10px;font-weight:600">🎬 视频</span>`:""}</div><div class="lct">${CAT_NAME[L.cat]} · ⏱${L.prep}′ · ${(L.tags||[]).slice(0,2).join("/")}</div></div>
+     </div>`).join(""):"<p class='note'>未找到匹配餐食，换个关键词或切换餐次试试</p>";
+}
+document.getElementById("pFilt").onclick=e=>{
+  if(!e.target.dataset.c)return;pickCat=e.target.dataset.c;
+  document.querySelectorAll("#pFilt .pill").forEach(p=>p.classList.toggle("on",p.dataset.c===pickCat));
+  renderPicker(document.getElementById("pSearch").value);
+};
+document.getElementById("pSearch").oninput=e=>renderPicker(e.target.value);
+document.getElementById("pGrid").onclick=e=>{
+  const id=e.target.closest("[data-lib]")?.dataset.lib;if(!id)return;
+  setMeal(active.date,active.slot,instFromLib(id));
+  hide("pickMask");render();toast("已添加："+libById(id).name);
+};
+document.getElementById("pCustom").onclick=()=>{hide("pickMask");openEditor(active.date,active.slot,null);};
+
+/* ============ 增删改查核心 ============ */
+function setMeal(k,s,inst){
+  if(!state.calendar[k])state.calendar[k]={};
+  if(!state.calendar[k][s])state.calendar[k][s]=[];
+  state.calendar[k][s].push(inst);save();
+}
+function updateMeal(k,s,idx,inst){
+  if(state.calendar[k]&&state.calendar[k][s]&&idx>=0&&idx<state.calendar[k][s].length){
+    state.calendar[k][s][idx]=inst;save();
+  }
+}
+function delMeal(k,s,idx){
+  if(state.calendar[k]&&state.calendar[k][s]){
+    state.calendar[k][s].splice(idx,1);
+    if(!state.calendar[k][s].length)delete state.calendar[k][s];
+    if(!Object.keys(state.calendar[k]).length)delete state.calendar[k];
+  }
+  save();
+}
+function clearDay(k){
+  if(state.calendar[k]){delete state.calendar[k];save();}
+}
+
+/* ============ 顶部操作 ============ */
+document.getElementById("viewSeg").onclick=e=>{
+  if(e.target.dataset.v){state.view=e.target.dataset.v;render();}
+};
+document.getElementById("prev").onclick=()=>{
+  state.anchor=addDays(state.anchor, state.view==="week"?-7:-3);render();
+};
+document.getElementById("next").onclick=()=>{
+  state.anchor=addDays(state.anchor, state.view==="week"?7:3);render();
+};
+document.getElementById("todayBtn").onclick=()=>{state.anchor=todayISO();render();};
+
+document.getElementById("presetBtn").onclick=()=>{
+  const m=mondayOf(state.anchor);
+  PRESET_WEEK.forEach((day,i)=>{
+    const k=addDays(m,i);
+    if(!state.calendar[k])state.calendar[k]={};
+    if(!state.calendar[k].break)state.calendar[k].break=[];
+    if(!state.calendar[k].lunch)state.calendar[k].lunch=[];
+    if(!state.calendar[k].dinner)state.calendar[k].dinner=[];
+    state.calendar[k].break.push(instFromLib(day.break));
+    state.calendar[k].lunch.push(instFromLib(day.lunch));
+    state.calendar[k].dinner.push(instFromLib(day.dinner));
+  });
+  save();render();
+  const a=parseKey(addDays(m,0)),b=parseKey(addDays(m,6));
+  toast(`已加载专家周计划（${a.getMonth()+1}月${a.getDate()}日-${b.getMonth()+1}月${b.getDate()}日）`);
+};
+
+document.getElementById("autoBtn").onclick=()=>{
+  let days=[];
+  if(state.view==="week"){const m=mondayOf(state.anchor);for(let i=0;i<7;i++)days.push(addDays(m,i));}
+  else{for(let i=0;i<3;i++)days.push(addDays(state.anchor,i));}
+  const pool={break:state.library.filter(x=>x.cat==="break"),lunch:state.library.filter(x=>x.cat==="lunch"),dinner:state.library.filter(x=>x.cat==="dinner")};
+  let filled=0;
+  days.forEach(k=>["break","lunch","dinner"].forEach(s=>{
+    const arr=state.calendar[k]&&state.calendar[k][s];
+    if(!arr||!arr.length){
+      const cand=pool[s];const pick=cand[Math.floor(Math.random()*cand.length)];
+      setMeal(k,s,instFromLib(pick.id));filled++;
+    }
+  }));
+  render();toast(`已随机填充 ${filled} 个空缺`);
+};
+
+/* 详情弹窗按钮 */
+document.getElementById("dEdit").onclick=()=>{const {date,slot,idx}=active;const it=state.calendar[date][slot][idx];hide("detailMask");openEditor(date,slot,idx,it);};
+document.getElementById("dDel").onclick=()=>{delMeal(active.date,active.slot,active.idx);hide("detailMask");render();toast("已删除该餐");};
+document.getElementById("dFav").onclick=()=>{
+  const it=state.calendar[active.date][active.slot][active.idx];
+  const i=state.favorites.indexOf(it.name);
+  if(i>=0){state.favorites.splice(i,1);toast("已取消收藏")}else{state.favorites.push(it.name);toast("已收藏："+it.name)}
+  save();openDetail(active.date,active.slot,active.idx);
+};
+
+/* 网格点击委托 */
+document.getElementById("grid").addEventListener("click",e=>{
+  if(e.target.closest(".ck")||e.target.closest(".del"))return;
+  const open=e.target.closest("[data-open]");
+  const add=e.target.closest("[data-add]");
+  const clear=e.target.closest("[data-clear]");
+  if(clear){if(confirm("确定清空当天所有餐食？")){clearDay(clear.dataset.clear);render();toast("已清空当天");}return;}
+  if(open){const [k,s,idx]=open.dataset.open.split("|");openDetail(k,s,+idx);}
+  else if(add){const [k,s]=add.dataset.add.split("|");openPicker(k,s);}
+});
+// 完成标记
+document.getElementById("grid").addEventListener("click",e=>{
+  const ck=e.target.closest(".ck");if(!ck)return;
+  e.stopPropagation();
+  const card=ck.closest("[data-open]");if(!card)return;
+  const [k,s,idx]=card.dataset.open.split("|");
+  state.calendar[k][s][+idx].done=!state.calendar[k][s][+idx].done;save();render();
+});
+// 卡片直接删除
+document.getElementById("grid").addEventListener("click",e=>{
+  const del=e.target.closest(".del");if(!del)return;
+  e.stopPropagation();
+  const [k,s,idx]=del.dataset.del.split("|");
+  delMeal(k,s,+idx);render();toast("已删除该餐");
+});
+
+/* 购物清单 */
+document.getElementById("shopBtn").onclick=()=>{
+  let days=[];
+  if(state.view==="week"){const m=mondayOf(state.anchor);for(let i=0;i<7;i++)days.push(addDays(m,i));}
+  else{for(let i=0;i<3;i++)days.push(addDays(state.anchor,i));}
+  const agg={};
+  days.forEach(k=>["break","lunch","dinner"].forEach(s=>{
+    const arr=state.calendar[k]&&state.calendar[k][s];
+    if(arr)arr.forEach(it=>{
+      if(it&&it.ing)it.ing.forEach(x=>{
+        const key=x.n.trim();if(!key)return;
+        if(!agg[key])agg[key]=[];
+        agg[key].push((it.name||"")+" "+(x.a||""));
+      });
+    });
+  }));
+  const keys=Object.keys(agg);
+  document.getElementById("shopList").innerHTML=keys.length?
+    keys.map(k=>`<li><span class="sn">${k}</span><span class="sa">${agg[k].join("；")}</span></li>`).join("")
+    :"<li>当前视图还没有安排餐食</li>";
+  show("shopMask");
+};
+document.getElementById("shopCopy").onclick=()=>{
+  const txt=[...document.querySelectorAll("#shopList li")].map(li=>li.textContent).join("\n");
+  navigator.clipboard.writeText(txt).then(()=>toast("已复制到剪贴板"));
+};
+
+/* 分享链接 & 数据备份 */
+document.getElementById("ioBtn").onclick=()=>{
+  document.getElementById("shareUrl").value=SHARE_URL;
+  // 显示 token 状态
+  const status=document.getElementById("ghTokenStatus");
+  if(ghToken){status.textContent="✅ 已配置写入权限";status.style.color="#27ae60";}
+  else{status.textContent="⚠️ 未配置，修改不会同步到云端";status.style.color="#c0392b";}
+  show("ioMask");
+};
+document.getElementById("shareCopy").onclick=()=>{
+  navigator.clipboard.writeText(SHARE_URL).then(()=>toast("链接已复制，发送给家人即可"));
+};
+document.getElementById("ghTokenSave").onclick=()=>{
+  const v=document.getElementById("ghTokenInput").value.trim();
+  if(!v||!v.startsWith("ghp_")){toast("请输入有效的 GitHub PAT（ghp_ 开头）");return;}
+  ghToken=v;
+  const s=loadLocal();s._ghToken=v;localStorage.setItem(KEY,JSON.stringify(s));
+  toast("✅ 已配置，云端同步已启用");
+  document.getElementById("ghTokenInput").value="";
+  document.getElementById("ghTokenStatus").textContent="✅ 已配置写入权限";
+  document.getElementById("ghTokenStatus").style.color="#27ae60";
+};
+document.getElementById("ioExport").onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="宝宝餐饮日历备份.json";a.click();toast("已导出");
+};
+document.getElementById("ioFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&d.calendar){state=normalizeLegacy(d);save();render();toast("导入成功");hide("ioMask");}else toast("文件格式不正确");}catch(err){toast("解析失败");}};
+  r.readAsText(f);
+};
+
+document.getElementById("printBtn").onclick=()=>window.print();
+
+/* 通用弹窗控制 */
+function show(id){document.getElementById(id).classList.add("show")}
+function hide(id){document.getElementById(id).classList.remove("show")}
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>b.closest(".mask").classList.remove("show"));
+document.querySelectorAll(".mask").forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove("show")});
+
+let toastTimer;
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800);}
+
+/* 餐品库管理 */
+function renderLibTable(q){
+  q=(q||"").trim().toLowerCase();
+  const list=q?state.library.filter(L=>L.name.toLowerCase().includes(q)):state.library;
+  const tbody=document.getElementById("libTbody");
+  tbody.innerHTML=list.map(L=>
+    `<tr><td>${L.id}</td><td>${CAT_NAME[L.cat]}</td><td>${L.name}</td><td>${L.prep}′</td>
+     <td>${(L.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join(" ")}</td>
+     <td><span class="ldel" data-ldel="${L.id}">✕</span></td></tr>`
+  ).join("")||"<tr><td colspan='6' style='color:var(--muted);padding:20px'>未找到匹配餐品</td></tr>";
+}
+document.getElementById("libBtn").onclick=()=>{renderLibTable("");show("libMask");};
+document.getElementById("libSearch").oninput=e=>renderLibTable(e.target.value);
+document.getElementById("libTbody").onclick=e=>{
+  const del=e.target.closest("[data-ldel]");if(!del)return;
+  if(!confirm("确定从餐品库删除「"+del.dataset.ldel+"」？"))return;
+  state.library=state.library.filter(L=>L.id!==del.dataset.ldel);
+  save();renderLibTable(document.getElementById("libSearch").value);
+  toast("已从库中删除");
+};
+document.getElementById("libAddBtn").onclick=()=>{
+  const name=document.getElementById("libAddName").value.trim();
+  if(!name){toast("请输入名称");return;}
+  const cat=document.getElementById("libAddCat").value;
+  const prep=+document.getElementById("libAddPrep").value||15;
+  const ids=state.library.filter(L=>L.cat===cat);
+  const lastNum=ids.length?Math.max(...ids.map(L=>parseInt(L.id.slice(1)))):0;
+  const prefix={break:"b",lunch:"l",dinner:"d"}[cat];
+  const newId=prefix+String(lastNum+1).padStart(2,"0");
+  state.library.push({id:newId,cat,name,prep,ing:[{n:"主料",a:"适量"}],steps:["待补充"],tags:[],al:[],img:"",video:""});
+  save();renderLibTable(document.getElementById("libSearch").value);
+  document.getElementById("libAddName").value="";
+  toast("已添加："+name+"（"+newId+"）");
+};
+
+render();
+skEl.classList.remove("show");
+</script>
+</body>
+</html>

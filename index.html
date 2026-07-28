@@ -501,7 +501,8 @@ const GH_REPO = "baby-meals";
 const GH_FILE = "data.json";
 const GH_BRANCH = "gh-pages";
 const DATA_URL = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/${GH_BRANCH}/${GH_FILE}`;
-const GH_API = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`;
+const GH_API_GET = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`;
+const GH_API_PUT = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`;
 const SHARE_URL = `https://${GH_USER}.github.io/${GH_REPO}/`;
 
 let state = normalizeLegacy(loadLocal() || {view:"week", anchor:todayISO(), calendar:{}, favorites:[]});
@@ -517,38 +518,40 @@ function save(retry=0){
   localStorage.setItem(KEY, JSON.stringify(state));
   if(!ghToken)return;
 
-  function attempt(){
-    return fetch(GH_API,{cache:"no-store"}).then(r=>r.json()).then(meta=>{
-      if(!meta.sha)throw new Error("no sha");
-      const payload = {
-        calendar:snapshot.calendar, favorites:snapshot.favorites,
-        library:snapshot.library, updatedAt:new Date().toISOString()
-      };
-      return fetch(GH_API,{
-        method:"PUT",
-        cache:"no-store",
-        headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
-        body:JSON.stringify({
-          message:`sync ${new Date().toLocaleTimeString("zh-CN")}`,
-          branch:GH_BRANCH, sha:meta.sha,
-          content:btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))))
-        })
-      }).then(r=>r.json());
+  // GET: 加随机参数强制绕 CDN 缓存 → 拿到最新 SHA
+  fetch(`${GH_API_GET}?ref=${GH_BRANCH}&_=${Math.random()}`)
+  .then(r=>{if(!r.ok)throw new Error("GET "+r.status);return r.json();})
+  .then(meta=>{
+    if(!meta.sha)throw new Error("no sha");
+    const payload = {
+      calendar:snapshot.calendar, favorites:snapshot.favorites,
+      library:snapshot.library, updatedAt:new Date().toISOString()
+    };
+    const content=btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))));
+    // PUT: 不带 query，SHA 从 GET 拿到的 → 写入
+    return fetch(GH_API_PUT,{
+      method:"PUT",
+      headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
+      body:JSON.stringify({
+        message:`sync ${new Date().toLocaleTimeString("zh-CN")}`,
+        branch:GH_BRANCH, sha:meta.sha, content
+      })
     });
-  }
-
-  attempt().then(d=>{
-    if(d&&d.content&&d.content.sha){console.log("☁️ synced");toast("☁️ 已同步")}
-    else throw new Error(d.message||"no sha in response");
-  }).catch(e=>{
-    console.warn("GitHub save (try "+retry+"):",e.message);
-    if(retry<3)setTimeout(()=>save(retry+1),500); // 自动重试
+  })
+  .then(r=>{if(!r.ok)return r.json().then(j=>{throw new Error(j.message)});return r.json();})
+  .then(d=>{
+    if(d&&d.content){console.log("☁️ synced "+d.content.sha.substring(0,7));toast("☁️ 已同步");}
+    else throw new Error("no sha in response");
+  })
+  .catch(e=>{
+    console.warn("GitHub save:"+(retry?" retry"+retry:"")+":",e.message);
+    if(retry<2)setTimeout(()=>save(retry+1),800); // 间隔更久+少一次重试
   });
 }
 
 function pullCloud(showToast=true){
-  fetch(DATA_URL+"?_="+Date.now(),{cache:"no-store"})
-  .then(r=>r.ok?r.json():null)
+  fetch(DATA_URL+"?_="+Math.random(),{cache:"no-store"})
+  .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{
     if(d&&d.calendar&&Object.keys(d.calendar).length){
       state.calendar=d.calendar;

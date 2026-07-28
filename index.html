@@ -227,6 +227,7 @@
     <button class="btn" id="autoBtn">🎲 随机填充空缺</button>
     <button class="btn" id="printBtn">🖨️ 打印</button>
     <button class="btn" id="ioBtn">📎 分享链接</button>
+    <button class="btn" id="cloudBtn">☁️ 从云端刷新</button>
     <button class="btn" id="libBtn">📦 餐品管理</button>
   </div>
   <div class="stats" id="statsBar"></div>
@@ -559,15 +560,22 @@ function pullCloud(showToast=true){
   .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{
     if(d&&d.calendar&&Object.keys(d.calendar).length){
+      const oldDates=Object.keys(state.calendar);
       state.calendar=d.calendar;
       state.favorites=d.favorites||[];
       if(d.library)state.library=d.library;
       state=normalizeLegacy(state);
+      const newDates=Object.keys(state.calendar);
       localStorage.setItem(KEY, JSON.stringify(state));
       render();
-      if(showToast)toast("☁️ 已从云端拉取");
+      if(showToast)toast(`☁️ 云端 ${newDates.length} 天 ${newDates.filter(x=>oldDates.includes(x)).length} 天更新`);
+    } else if(showToast){
+      toast("☁️ 云端暂无数据");
     }
-  }).catch(e=>console.warn("GitHub read:",e));
+  }).catch(e=>{
+    console.warn("GitHub read:",e);
+    if(showToast)toast("☁️ 拉取失败: "+e.message);
+  });
 }
 
 
@@ -948,6 +956,11 @@ document.getElementById("ioBtn").onclick=()=>{
   if(ghToken){status.textContent="✅ 已配置写入权限";status.style.color="#27ae60";}
   else{status.textContent="⚠️ 未配置，修改不会同步到云端";status.style.color="#c0392b";}
   show("ioMask");
+};
+
+document.getElementById("cloudBtn").onclick=()=>{
+  toast("☁️ 正在从云端拉取...");
+  pullCloud(true);
 };
 document.getElementById("shareCopy").onclick=()=>{
   navigator.clipboard.writeText(SHARE_URL).then(()=>toast("链接已复制，发送给家人即可"));

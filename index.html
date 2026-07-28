@@ -1006,6 +1006,8 @@ document.getElementById("ghTokenSave").onclick=()=>{
   document.getElementById("ghTokenInput").value="";
   document.getElementById("ghTokenStatus").textContent="✅ 已配置写入权限";
   document.getElementById("ghTokenStatus").style.color="#27ae60";
+  // 立即触发一次云端拉取
+  lastSaveTime=0;pullCloud(true);
 };
 document.getElementById("ioExport").onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});

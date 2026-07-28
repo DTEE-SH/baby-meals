@@ -548,8 +548,9 @@ let lastSaveTime=0;    // 最后写入时间戳，冷却期内不拉云端
 
 function save(){
   localStorage.setItem(KEY, JSON.stringify(state));
-  if(ghToken&&!saveRunning){doSave();}
-  else if(ghToken){savePending=true;} // 标记：当前写入完成后需要再写一次
+  if(!ghToken){console.warn("save: no token set");return;}
+  if(!saveRunning){doSave();}
+  else{savePending=true;}
 }
 
 function doSave(retry=0){
@@ -576,10 +577,12 @@ function doSave(retry=0){
     if(savePending)doSave(); // 还有待处理的数据
   })
   .catch(e=>{
-    console.warn("GitHub save:"+(retry?" retry"+retry:"")+":",e.message);
+    const msg=e.message||"unknown";
+    console.warn("GitHub save:"+(retry?" retry"+retry:"")+":",msg);
+    if(!retry){toast("☁️ 同步失败: "+msg.substring(0,30),3000);}
     saveRunning=false;
     if(retry<2)setTimeout(()=>doSave(retry+1),1500);
-    else if(savePending)doSave(); // 重试耗尽后，如果还有待处理也执行
+    else if(savePending)doSave();
   });
 }
 
@@ -1031,8 +1034,8 @@ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>b.closest(".m
 document.querySelectorAll(".mask").forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove("show")});
 
 let toastTimer;
-function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800);}
+function toast(msg,dur=1800){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),dur);}
 
 /* 餐品库管理 */
 function renderLibTable(q){

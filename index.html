@@ -544,6 +544,7 @@ if(!ghToken&&location.hash){
 
 let savePending=false;
 let saveRunning=false;
+let lastSaveTime=0;    // 最后写入时间戳，冷却期内不拉云端
 
 function save(){
   localStorage.setItem(KEY, JSON.stringify(state));
@@ -569,7 +570,7 @@ function doSave(retry=0){
   })
   .then(r=>{if(!r.ok)return r.json().then(j=>{throw new Error(j.message)});return r.json();})
   .then(d=>{
-    if(d&&d.content){console.log("☁️ synced "+d.content.sha.substring(0,7));toast("☁️ 已同步");}
+    if(d&&d.content){console.log("☁️ synced "+d.content.sha.substring(0,7));toast("☁️ 已同步");lastSaveTime=Date.now();}
     else throw new Error("no sha in response");
     saveRunning=false;
     if(savePending)doSave(); // 还有待处理的数据
@@ -583,7 +584,8 @@ function doSave(retry=0){
 }
 
 function pullCloud(showToast=true){
-  if(saveRunning)return; // 正在写入云端，不要拉（避免覆盖当前操作）
+  if(saveRunning)return;
+  if(Date.now()-lastSaveTime<90000)return; // 写入后 90 秒内不拉（等 CDN 传播）
   fetch(DATA_URL+"?_="+Math.random(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{

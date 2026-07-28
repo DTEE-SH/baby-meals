@@ -877,7 +877,13 @@ function clearDay(k){
 
 /* ============ 顶部操作 ============ */
 document.getElementById("viewSeg").onclick=e=>{
-  if(e.target.dataset.v){state.view=e.target.dataset.v;render();}
+  if(e.target.dataset.v){
+    state.view=e.target.dataset.v;
+    // 周视图：锚定自然周周一；三日视图：锚定今天
+    if(state.view==="week")state.anchor=mondayOf(todayISO());
+    else state.anchor=todayISO();
+    render();
+  }
 };
 document.getElementById("prev").onclick=()=>{
   state.anchor=addDays(state.anchor, state.view==="week"?-7:-3);render();

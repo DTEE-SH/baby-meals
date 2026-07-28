@@ -501,35 +501,35 @@ const GH_REPO = "baby-meals";
 const GH_FILE = "data.json";
 const GH_BRANCH = "gh-pages";
 const DATA_URL = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/${GH_BRANCH}/${GH_FILE}`;
+const GH_API = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`;
 const SHARE_URL = `https://${GH_USER}.github.io/${GH_REPO}/`;
 
-// 先用 localStorage 秒开，云端数据到了再覆盖
 let state = normalizeLegacy(loadLocal() || {view:"week", anchor:todayISO(), calendar:{}, favorites:[]});
 let active = null;
 let pickCat = "all";
-let ghToken = null;     // GitHub PAT (写权限)
-let ghSha = null;       // data.json 的 SHA（GitHub 写文件必须）
+let ghToken = null;
+let ghSha = null;
 
 function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
-ghToken = (loadLocal()||{})._ghToken || null; // 先尝试读 token
+ghToken = (loadLocal()||{})._ghToken||null;
+
+// 先拿到 GitHub 文件 SHA（写文件必须）
+fetch(GH_API).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.sha)ghSha=d.sha;}).catch(()=>{});
 
 function save(){
   localStorage.setItem(KEY, JSON.stringify(state));
-  if(ghToken){
-    // 异步写 GitHub（任何人都能写，家庭共享关键）
-    fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${GH_FILE}`,{
+  if(ghToken&&ghSha){
+    const payload={
+      calendar:state.calendar, favorites:state.favorites,
+      library:state.library, updatedAt:new Date().toISOString()
+    };
+    fetch(GH_API,{
       method:"PUT",
       headers:{Authorization:"token "+ghToken,"Content-Type":"application/json"},
       body:JSON.stringify({
-        message:"sync from meal calendar",
-        branch:GH_BRANCH,
-        sha:ghSha||undefined,
-        content:btoa(unescape(encodeURIComponent(JSON.stringify({
-          calendar:state.calendar,
-          favorites:state.favorites,
-          library:state.library,
-          updatedAt:new Date().toISOString()
-        },null,2))))
+        message:`sync: ${new Date().toLocaleString("zh-CN")}`,
+        branch:GH_BRANCH, sha:ghSha,
+        content:btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))))
       })
     }).then(r=>r.json()).then(d=>{
       if(d.content&&d.content.sha)ghSha=d.content.sha;
@@ -553,7 +553,7 @@ fetch(DATA_URL+"?t="+Date.now())
     if(d.library)state.library=d.library;
     state=normalizeLegacy(state);
     save();render();
-    toast("☁️ 已从云端同步");
+    toast("☁️ 已加载云端数据");
   }
   skEl.classList.remove("show");
 }).catch(e=>{
@@ -937,7 +937,9 @@ document.getElementById("ghTokenSave").onclick=()=>{
   const v=document.getElementById("ghTokenInput").value.trim();
   if(!v||!v.startsWith("ghp_")){toast("请输入有效的 GitHub PAT（ghp_ 开头）");return;}
   ghToken=v;
-  const s=loadLocal();s._ghToken=v;localStorage.setItem(KEY,JSON.stringify(s));
+  const s=loadLocal()||{};s._ghToken=v;localStorage.setItem(KEY,JSON.stringify(s));
+  // 获取新 SHA
+  fetch(GH_API).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.sha){ghSha=d.sha;console.log("SHA loaded:",ghSha.substring(0,7));}}).catch(()=>{});
   toast("✅ 已配置，云端同步已启用");
   document.getElementById("ghTokenInput").value="";
   document.getElementById("ghTokenStatus").textContent="✅ 已配置写入权限";

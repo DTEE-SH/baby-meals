@@ -585,7 +585,7 @@ function doSave(retry=0){
 
 function pullCloud(showToast=true){
   if(saveRunning)return;
-  if(Date.now()-lastSaveTime<90000)return; // 写入后 90 秒内不拉（等 CDN 传播）
+  if(Date.now()-lastSaveTime<180000)return; // 写入后 3 分钟内不拉（等 CDN 传播）
   fetch(DATA_URL+"?_="+Math.random(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{
@@ -614,9 +614,10 @@ const skEl=document.getElementById("skeleton");
 skEl.classList.add("show");
 setTimeout(()=>skEl.classList.remove("show"),3000);
 
-/* ---- 首次拉数据 + 自动轮询（每 20 秒检查更新） ---- */
+/* ---- 首次拉数据 ---- */
 pullCloud(false);
-setInterval(()=>pullCloud(false),20000);
+/* 自动轮询：每 3 分钟（默认）。3 分钟内做过修改则跳过（避免覆盖） */
+setInterval(()=>pullCloud(false),180000);
 
 function normalizeLegacy(s){
   if(!s.library||s.library.length<50)s.library=LIBRARY.map(x=>({...x,ing:x.ing.map(y=>({...y})),steps:[...x.steps],tags:[...x.tags],al:[...x.al]}));

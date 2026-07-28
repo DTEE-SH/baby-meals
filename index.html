@@ -557,7 +557,8 @@ function doSave(retry=0){
   saveRunning=true;savePending=false;
   const snapshot=JSON.parse(JSON.stringify(state));
 
-  fetch(`${GH_API_GET}?ref=${GH_BRANCH}&_=${Math.random()}`)
+  // GET 也带 Authorization，避免命中匿名 60次/小时 限流
+  fetch(`${GH_API_GET}?ref=${GH_BRANCH}&_=${Math.random()}`,{headers:ghToken?{Authorization:"token "+ghToken}:{}})
   .then(r=>{if(!r.ok)throw new Error("GET "+r.status);return r.json();})
   .then(meta=>{
     if(!meta.sha)throw new Error("no sha");

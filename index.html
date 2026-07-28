@@ -536,6 +536,10 @@ let ghToken = null;
 
 function loadLocal(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 ghToken = (loadLocal()||{})._ghToken||null;
+// 尝试从云端 data.json 读预置 token
+function loadTokenFromCloud(d){
+  if(!ghToken&&d&&d._ghToken){ghToken=d._ghToken;delete d._ghToken;}
+}
 
 // 防抖：多次快速编辑合并为一次保存，避免 SHA 竞争
 let saveTimer=null;
@@ -582,6 +586,7 @@ function pullCloud(showToast=true){
   fetch(DATA_URL+"?_="+Math.random(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{
+    loadTokenFromCloud(d); // 云端预置 token
     if(d&&d.calendar&&Object.keys(d.calendar).length){
       const oldDates=Object.keys(state.calendar);
       state.calendar=d.calendar;

@@ -542,20 +542,17 @@ if(!ghToken&&location.hash){
   if(m){ghToken=m[1];const s=loadLocal()||{};s._ghToken=ghToken;localStorage.setItem(KEY,JSON.stringify(s));history.replaceState(null,null,location.pathname+location.search);}
 }
 
-// 防抖：多次快速编辑合并为一次保存，避免 SHA 竞争
-let saveTimer=null;
+let savePending=false;
 let saveRunning=false;
 
 function save(){
   localStorage.setItem(KEY, JSON.stringify(state));
-  if(!ghToken)return;
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(doSave,600);
+  if(ghToken&&!saveRunning){doSave();}
+  else if(ghToken){savePending=true;} // 标记：当前写入完成后需要再写一次
 }
 
 function doSave(retry=0){
-  if(saveRunning)return;
-  saveRunning=true;
+  saveRunning=true;savePending=false;
   const snapshot=JSON.parse(JSON.stringify(state));
 
   fetch(`${GH_API_GET}?ref=${GH_BRANCH}&_=${Math.random()}`)
@@ -575,15 +572,18 @@ function doSave(retry=0){
     if(d&&d.content){console.log("☁️ synced "+d.content.sha.substring(0,7));toast("☁️ 已同步");}
     else throw new Error("no sha in response");
     saveRunning=false;
+    if(savePending)doSave(); // 还有待处理的数据
   })
   .catch(e=>{
     console.warn("GitHub save:"+(retry?" retry"+retry:"")+":",e.message);
     saveRunning=false;
     if(retry<2)setTimeout(()=>doSave(retry+1),1500);
+    else if(savePending)doSave(); // 重试耗尽后，如果还有待处理也执行
   });
 }
 
 function pullCloud(showToast=true){
+  if(saveRunning)return; // 正在写入云端，不要拉（避免覆盖当前操作）
   fetch(DATA_URL+"?_="+Math.random(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{

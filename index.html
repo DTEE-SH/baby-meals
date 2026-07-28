@@ -572,7 +572,7 @@ function doSave(retry=0){
   })
   .then(r=>{if(!r.ok)return r.json().then(j=>{throw new Error(j.message)});return r.json();})
   .then(d=>{
-    if(d&&d.content){console.log("☁️ synced "+d.content.sha.substring(0,7));toast("☁️ 已同步");lastSaveTime=Date.now();}
+    if(d&&d.content){console.log("☁️ synced "+d.content.sha.substring(0,7));if(!retry)toast("☁️ 已同步");lastSaveTime=Date.now();}
     else throw new Error("no sha in response");
     saveRunning=false;
     if(savePending)doSave(); // 还有待处理的数据
@@ -618,10 +618,8 @@ const skEl=document.getElementById("skeleton");
 skEl.classList.add("show");
 setTimeout(()=>skEl.classList.remove("show"),3000);
 
-/* ---- 首次拉数据 ---- */
+/* ---- 首次拉数据（仅手动刷新，不自动轮询） ---- */
 pullCloud(false);
-/* 自动轮询：每 3 分钟（默认）。3 分钟内做过修改则跳过（避免覆盖） */
-setInterval(()=>pullCloud(false),180000);
 
 function normalizeLegacy(s){
   if(!s.library||s.library.length<50)s.library=LIBRARY.map(x=>({...x,ing:x.ing.map(y=>({...y})),steps:[...x.steps],tags:[...x.tags],al:[...x.al]}));

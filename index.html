@@ -584,9 +584,9 @@ const skEl=document.getElementById("skeleton");
 skEl.classList.add("show");
 setTimeout(()=>skEl.classList.remove("show"),3000);
 
-/* ---- 首次拉数据 ---- */
+/* ---- 首次拉数据 + 自动轮询（每 20 秒检查更新） ---- */
 pullCloud(false);
-setTimeout(()=>skEl.classList.remove("show"),3000);
+setInterval(()=>pullCloud(false),20000);
 
 function normalizeLegacy(s){
   if(!s.library||s.library.length<50)s.library=LIBRARY.map(x=>({...x,ing:x.ing.map(y=>({...y})),steps:[...x.steps],tags:[...x.tags],al:[...x.al]}));

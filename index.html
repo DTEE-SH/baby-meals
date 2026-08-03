@@ -587,9 +587,9 @@ function doSave(retry=0){
   });
 }
 
-function pullCloud(showToast=true){
+function pullCloud(showToast=true,force=false){
   if(saveRunning)return;
-  if(Date.now()-lastSaveTime<180000)return; // 写入后 3 分钟内不拉（等 CDN 传播）
+  if(!force && Date.now()-lastSaveTime<180000)return; // 自动拉有3min冷却，手动☁️无视
   fetch(DATA_URL+"?_="+Math.random(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw new Error("pull HTTP "+r.status);return r.json();})
   .then(d=>{
@@ -1001,7 +1001,7 @@ document.getElementById("ghTokenInput").value=ghToken||"";
 
 document.getElementById("cloudBtn").onclick=()=>{
   toast("☁️ 正在从云端拉取...");
-  pullCloud(true);
+  pullCloud(true,true); // force=true，无视冷却期
 };
 document.getElementById("shareCopy").onclick=()=>{
   navigator.clipboard.writeText(SHARE_URL).then(()=>toast("链接已复制，发送给家人即可"));
